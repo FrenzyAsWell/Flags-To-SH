@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define ARG_INPUT_COMMAND 2
 
@@ -8,8 +9,8 @@ char buffer[512];
 int main(int argc, char *argv[])
 {
 	char *pCommand;
+	char pNewCommand[256];
 	FILE *fpHelp;
-	char *pNewCommand;
 
 	if (argc != ARG_INPUT_COMMAND) 
 	{
@@ -23,18 +24,20 @@ int main(int argc, char *argv[])
 	fpHelp = popen(pCommand, "r");
 	while (fgets(buffer, sizeof(buffer), fpHelp) != NULL)
 	{
-		if (strstr(buffer, "--") == NULL) 
+		char *pNew = strstr(buffer, "--");
+		if (pNew == NULL) 
 			continue;
-		/*
-		pNewCommand = NULL;
-		for (int a = 0; a < strlen(buffer); a++) 
+			
+		memmove(buffer, pNew + 1, strlen(pNew + 1) + 1);
+		for (int a = 0; a < strlen(buffer) + 1; a++) 
 		{
-			if (buffer[a] == '=')
+			if (buffer[a] == '=' || buffer[a] == ' ')
 				break;
-			pNewCommand += buffer[a];
+			pNewCommand[a] = buffer[a];
 		}
-		*/
-		printf("%s", buffer);
+
+		printf("%s\n", pNewCommand);
+		memset(pNewCommand, '\0', sizeof(pNewCommand));
 	}
 
 	return 0;
