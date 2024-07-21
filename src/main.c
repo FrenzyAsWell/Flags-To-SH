@@ -6,7 +6,9 @@
 
 int iArrSize = 256;
 char buffer[256];
+char updated_buffer[256];
 
+void PrintData(char** arrErasable);
 char** GetOptions(char* pCommand);
 void EraseData(char** arrErasable);
 
@@ -20,6 +22,7 @@ int main(int argc, char *argv[])
 	
 	char** arrOptions = GetOptions(argv[argc - 1]);
 
+	PrintData(arrOptions);
 	EraseData(arrOptions);
 
 	return 0;
@@ -27,7 +30,7 @@ int main(int argc, char *argv[])
 
 char** GetOptions(char* pCommand)
 {	
-	char pNewCommand[256];
+	char *pNewCommand;
 	FILE *fpHelp;
 
 	char** arrOptions = malloc(iArrSize * sizeof(char*));
@@ -42,18 +45,28 @@ char** GetOptions(char* pCommand)
 			continue;
 			
 		memmove(buffer, pNew + 2, strlen(pNew + 1) + 1);
+
+		memset(updated_buffer, '\0', sizeof(updated_buffer));
 		for (int b = 0; b < strlen(buffer) + 1; b++) 
 		{
 			if (buffer[b] == '=' || buffer[b] == ' ')
 				break;
-			pNewCommand[b] = buffer[b];
+			updated_buffer[b] = buffer[b];
 		}
 
-		arrOptions[a] = malloc(strlen(pNewCommand) * sizeof(char));
+		pNewCommand = strtok(updated_buffer, "");
+
+		arrOptions[a] = malloc((strlen(pNewCommand) + 1) * sizeof(char));
 		strcpy(arrOptions[a], pNewCommand);
 	}
-
 	return arrOptions;
+}
+
+void PrintData(char** arrErasable)
+{
+	for (int a = 0; a < iArrSize; a++)
+		if (arrErasable[a] != NULL) 
+			printf("%s\n", arrErasable[a]);
 }
 
 void EraseData(char** arrErasable)
