@@ -4,13 +4,12 @@
 
 #define ARG_INPUT_COMMAND 2
 
-int iArrSize = 256;
 char buffer[256];
 char updated_buffer[256];
 
-void PrintData(char** arrErasable);
-char** GetOptions(char* pCommand);
-void EraseData(char** arrErasable);
+void PrintData(char** arrErasable, int iSize);
+int GetOptions(char* pCommand, char*** arrOptions);
+void EraseData(char** arrErasable, int iSize);
 
 int main(int argc, char *argv[])
 {
@@ -20,22 +19,29 @@ int main(int argc, char *argv[])
 		return 1;	
 	}
 	
-	char** arrOptions = GetOptions(argv[argc - 1]);
+	char** arrOptions;
+	int iArrSize = GetOptions(argv[argc - 1], &arrOptions);
 
-	PrintData(arrOptions);
-	EraseData(arrOptions);
+	PrintData(arrOptions, iArrSize);
+	EraseData(arrOptions, iArrSize);
 
 	return 0;
 }
 
-char** GetOptions(char* pCommand)
+int GetOptions(char* pCommand, char*** arrOptions)
 {	
 	char *pNewCommand;
 	FILE *fpHelp;
 
-	char** arrOptions = malloc(iArrSize * sizeof(char*));
-
 	strcat(pCommand, " --help");
+
+	fpHelp = popen(pCommand, "r");
+
+	int iLines = 0;
+	for (int a = 0; fgets(buffer, sizeof(buffer), fpHelp) != NULL; a++)
+		iLines++;
+
+	(*arrOptions) = malloc(iLines * sizeof(char*));
 
 	fpHelp = popen(pCommand, "r");
 	for (int a = 0; fgets(buffer, sizeof(buffer), fpHelp) != NULL; a++)
@@ -56,22 +62,25 @@ char** GetOptions(char* pCommand)
 
 		pNewCommand = strtok(updated_buffer, "");
 
-		arrOptions[a] = malloc((strlen(pNewCommand) + 1) * sizeof(char));
-		strcpy(arrOptions[a], pNewCommand);
+		(*arrOptions)[a] = malloc((strlen(pNewCommand) + 1) * sizeof(char*));
+		strcpy((*arrOptions)[a], pNewCommand);
 	}
-	return arrOptions;
+
+	fclose(fpHelp);
+
+	return iLines;
 }
 
-void PrintData(char** arrErasable)
+void PrintData(char** arrErasable, int iSize)
 {
-	for (int a = 0; a < iArrSize; a++)
+	for (int a = 0; a < iSize; a++)
 		if (arrErasable[a] != NULL) 
 			printf("%s\n", arrErasable[a]);
 }
 
-void EraseData(char** arrErasable)
+void EraseData(char** arrErasable, int iSize)
 {
-	for (int a = 0; a < iArrSize; a++)
+	for (int a = 0; a < iSize; a++)
 		if (arrErasable[a] != NULL) 
 			free(arrErasable[a]);
 	free(arrErasable);
