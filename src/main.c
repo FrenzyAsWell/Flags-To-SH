@@ -61,7 +61,11 @@ int GetOptions(char* pCommand, char*** arrOptions)
 
 	int iLines = 0;
 	for (int a = 0; fgets(buffer, sizeof(buffer), fpHelp) != NULL; a++)
-		iLines++;
+	{
+		char *pNew = strstr(buffer, "--");
+		if (pNew != NULL) 
+			iLines++;
+	}
 
 	(*arrOptions) = malloc(iLines * sizeof(char*));
 
@@ -70,8 +74,11 @@ int GetOptions(char* pCommand, char*** arrOptions)
 	{
 		char *pNew = strstr(buffer, "--");
 		if (pNew == NULL) 
+		{
+			a--;
 			continue;
-			
+		}
+
 		memmove(buffer, pNew + 2, strlen(pNew + 1) + 1);
 
 		memset(updated_buffer, '\0', sizeof(updated_buffer));
