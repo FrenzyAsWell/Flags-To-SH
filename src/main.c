@@ -5,12 +5,21 @@
 
 #define ARG_INPUT_COMMAND 2
 
+typedef struct 
+{
+	int x_size;
+	int y_size;
+
+} stWindowSize;
+
 char buffer[256];
 char updated_buffer[256];
 
-void PrintData(char** arrErasable, int iSize);
+void InteractData(WINDOW* wndMain, char** arrErasable, int iSize);
 int GetOptions(char* pCommand, char*** arrOptions);
 void EraseData(char** arrErasable, int iSize);
+void PrintData(WINDOW* wndMain, stWindowSize* twndSize, char** arrPrintable, int iSize, int iHighlighted);
+
 
 int main(int argc, char *argv[])
 {
@@ -23,8 +32,20 @@ int main(int argc, char *argv[])
 	char** arrOptions;
 	int iArrSize = GetOptions(argv[argc - 1], &arrOptions);
 
-	PrintData(arrOptions, iArrSize);
+	initscr();
+	curs_set(0);
+	noecho();
+
+	int ixMax, iyMax;
+	getmaxyx(stdscr, iyMax, ixMax);
+
+	WINDOW *wndOptions = newwin(iyMax / 2, ixMax / 2, 0, 0);
+	keypad(wndOptions, true);
+
+	InteractData(wndOptions, arrOptions, iArrSize);
 	EraseData(arrOptions, iArrSize);
+
+	endwin();
 
 	return 0;
 }
@@ -68,15 +89,78 @@ int GetOptions(char* pCommand, char*** arrOptions)
 	}
 
 	fclose(fpHelp);
-
-	return iLines;
 }
 
-void PrintData(char** arrErasable, int iSize)
-{
+void PrintData(WINDOW* wndMain, stWindowSize* twndSize, char** arrPrintable, int iSize, int iHighlighted)
+{ 
+	int ixWin = 0;
+	int iOffset = 1;
+
+	refresh();
 	for (int a = 0; a < iSize; a++)
-		if (arrErasable[a] != NULL) 
-			printf("%s\n", arrErasable[a]);
+		if (arrPrintable[a] != NULL) 
+		{
+			if (a == iHighlighted)
+				wattron(wndMain, A_REVERSE);
+
+			mvwprintw(wndMain, iOffset, 1, "%s\n", arrPrintable[a]);
+			refresh();
+
+			if (ixWin < strlen(arrPrintable[a])) 
+				ixWin = strlen(arrPrintable[a]);
+
+			wattroff(wndMain, A_REVERSE);
+			iOffset++;
+		}
+
+
+
+	box(wndMain, 0, 0);
+	wrefresh(wndMain);
+
+	twndSize->x_size = ixWin;
+	twndSize->y_size = iOffset;
+}
+
+void InteractData(WINDOW* wndMain, char** arrPrintable, int iSize)
+{
+	int iwndxOffset = 10; // HARDCODE HERE
+	stWindowSize twndSize;
+
+	PrintData(wndMain, &twndSize, arrPrintable, iSize, -1);
+	wresize(wndMain, twndSize.y_size, twndSize.x_size + iwndxOffset + 2);
+
+	int iInterface = 0;
+	int iHighlighted = 0;
+	while (1) 
+	{
+		PrintData(wndMain, &twndSize, arrPrintable, twndSize.y_size, iHighlighted);
+
+		iInterface = wgetch(wndMain);
+		switch (iInterface) 
+		{
+			case KEY_UP: 
+			{			
+				iHighlighted--;			
+				if (iHighlighted < 3)
+					iHighlighted = 3;	
+
+				break;
+			};
+			case KEY_DOWN:
+			{
+				iHighlighted++;
+				if (iHighlighted > twndSize.y_size)
+					iHighlighted = twndSize.y_size;	
+
+				break;
+			}
+			default: break;
+		}
+
+	}
+
+	getch();
 }
 
 void EraseData(char** arrErasable, int iSize)
