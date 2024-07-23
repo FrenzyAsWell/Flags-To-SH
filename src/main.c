@@ -4,12 +4,17 @@
 
 #define ARG_INPUT_COMMAND 2
 
+typedef struct {
+	char* name_flag;
+	char* text_description;
+} stFlags;
+
 char buffer[256];
 char updated_buffer[256];
 
-void PrintData(char** arrErasable, int iSize);
-int GetOptions(char* pCommand, char*** arrOptions);
-void EraseData(char** arrErasable, int iSize);
+void PrintData(stFlags* arrErasable, int iSize);
+int GetOptions(char* pCommand, stFlags** arrOptions);
+void EraseData(stFlags* arrErasable, int iSize);
 
 int main(int argc, char *argv[])
 {
@@ -19,7 +24,7 @@ int main(int argc, char *argv[])
 		return 1;	
 	}
 	
-	char** arrOptions;
+	stFlags* arrOptions;
 	int iArrSize = GetOptions(argv[argc - 1], &arrOptions);
 
 	PrintData(arrOptions, iArrSize);
@@ -28,7 +33,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-int GetOptions(char* pCommand, char*** arrOptions)
+int GetOptions(char* pCommand, stFlags** arrOptions)
 {	
 	char *pNewCommand;
 	FILE *fpHelp;
@@ -69,8 +74,8 @@ int GetOptions(char* pCommand, char*** arrOptions)
 
 		pNewCommand = strtok(updated_buffer, "");
 
-		(*arrOptions)[a] = malloc((strlen(pNewCommand) + 1) * sizeof(char*));
-		strcpy((*arrOptions)[a], pNewCommand);
+		(*arrOptions)[a].name_flag = malloc((strlen(pNewCommand) + 1) * sizeof(char*));
+		strcpy((*arrOptions)[a].name_flag, pNewCommand);
 	}
 
 	fclose(fpHelp);
@@ -78,17 +83,17 @@ int GetOptions(char* pCommand, char*** arrOptions)
 	return iLines;
 }
 
-void PrintData(char** arrErasable, int iSize)
+void PrintData(stFlags* arrErasable, int iSize)
 {
 	for (int a = 0; a < iSize; a++)
-		if (arrErasable[a] != NULL) 
-			printf("%s\n", arrErasable[a]);
+		if (arrErasable[a].name_flag != NULL) 
+			printf("%s\n", arrErasable[a].name_flag);
 }
 
-void EraseData(char** arrErasable, int iSize)
+void EraseData(stFlags* arrErasable, int iSize)
 {
 	for (int a = 0; a < iSize; a++)
-		if (arrErasable[a] != NULL) 
-			free(arrErasable[a]);
+		if (arrErasable[a].name_flag != NULL) 
+			free(arrErasable[a].name_flag);
 	free(arrErasable);
 }
