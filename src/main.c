@@ -35,7 +35,8 @@ int main(int argc, char *argv[])
 
 int GetOptions(char* pCommand, stFlags** arrOptions)
 {	
-	char *pNewCommand;
+	char *pNewFlag;
+	char *pNewDescription;
 	FILE *fpHelp;
 
 	strcat(pCommand, " --help");
@@ -64,18 +65,35 @@ int GetOptions(char* pCommand, stFlags** arrOptions)
 
 		memmove(buffer, pNew + 2, strlen(pNew + 1) + 1);
 
+		int iPosSymbol = 0;
+
 		memset(updated_buffer, '\0', sizeof(updated_buffer));
-		for (int b = 0; b < strlen(buffer) + 1; b++) 
+		for (int b = iPosSymbol; b < strlen(buffer) + 1; b++) 
 		{
 			if (buffer[b] == '=' || buffer[b] == ' ')
 				break;
 			updated_buffer[b] = buffer[b];
+			iPosSymbol = b;
 		}
+		pNewFlag = strtok(updated_buffer, "");
 
-		pNewCommand = strtok(updated_buffer, "");
+		(*arrOptions)[a].name_flag = malloc((strlen(pNewFlag) + 1) * sizeof(char*));
+		strcpy((*arrOptions)[a].name_flag, pNewFlag);
 
-		(*arrOptions)[a].name_flag = malloc((strlen(pNewCommand) + 1) * sizeof(char*));
-		strcpy((*arrOptions)[a].name_flag, pNewCommand);
+		memset(updated_buffer, '\0', sizeof(updated_buffer));
+		for (int b = iPosSymbol, c = 0; b < strlen(buffer) + 1; b++) 
+		{
+			if (buffer[b] == '\n')
+				continue;
+
+			updated_buffer[c] = buffer[b];
+			c++;
+		}
+		pNewDescription = strtok(updated_buffer, "");
+
+		(*arrOptions)[a].text_description = malloc((strlen(pNewDescription) + 1) * sizeof(char*));
+		strcpy((*arrOptions)[a].text_description, pNewDescription);
+
 	}
 
 	fclose(fpHelp);
@@ -86,8 +104,7 @@ int GetOptions(char* pCommand, stFlags** arrOptions)
 void PrintData(stFlags* arrErasable, int iSize)
 {
 	for (int a = 0; a < iSize; a++)
-		if (arrErasable[a].name_flag != NULL) 
-			printf("%s\n", arrErasable[a].name_flag);
+		printf("%s\n", arrErasable[a].name_flag);
 }
 
 void EraseData(stFlags* arrErasable, int iSize)
