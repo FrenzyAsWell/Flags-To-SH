@@ -18,7 +18,7 @@ char updated_buffer[256];
 void InteractData(WINDOW* wndMain, char** arrErasable, int iSize);
 int GetOptions(char* pCommand, char*** arrOptions);
 void EraseData(char** arrErasable, int iSize);
-void PrintData(WINDOW* wndMain, stWindowSize* twndSize, char** arrPrintable, int iSize, int iHighlighted);
+void PrintData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted);
 
 
 int main(int argc, char *argv[])
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 	int ixMax, iyMax;
 	getmaxyx(stdscr, iyMax, ixMax);
 
-	WINDOW *wndOptions = newwin(iyMax / 2, ixMax / 2, 0, 0);
+	WINDOW *wndOptions = newwin(iyMax, ixMax, 0, 0);
 	keypad(wndOptions, true);
 
 	InteractData(wndOptions, arrOptions, iArrSize);
@@ -96,52 +96,46 @@ int GetOptions(char* pCommand, char*** arrOptions)
 	}
 
 	fclose(fpHelp);
+	
+	return iLines;
 }
 
-void PrintData(WINDOW* wndMain, stWindowSize* twndSize, char** arrPrintable, int iSize, int iHighlighted)
+void PrintData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted)
 { 
-	int ixWin = 0;
-	int iOffset = 1;
+	int iwndxOffset = 10; // HARDCODE HERE
+	int ixWin = 0, iyWin = 0;
 
 	refresh();
 	for (int a = 0; a < iSize; a++)
-		if (arrPrintable[a] != NULL) 
-		{
-			if (a == iHighlighted)
-				wattron(wndMain, A_REVERSE);
+	{
+		if (a == iHighlighted)
+			wattron(wndMain, A_REVERSE);
 
-			mvwprintw(wndMain, iOffset, 1, "%s\n", arrPrintable[a]);
-			refresh();
+		mvwprintw(wndMain, a + 1, 1, "%s\n", arrPrintable[a]);
+		refresh();
 
-			if (ixWin < strlen(arrPrintable[a])) 
-				ixWin = strlen(arrPrintable[a]);
+		if (ixWin < strlen(arrPrintable[a])) 
+			ixWin = strlen(arrPrintable[a]);
 
-			wattroff(wndMain, A_REVERSE);
-			iOffset++;
-		}
+		wattroff(wndMain, A_REVERSE);
+	}
 
-
+	iyWin = getmaxy(stdscr);
+	wresize(wndMain, iyWin, ixWin + iwndxOffset + 2);
 
 	box(wndMain, 0, 0);
 	wrefresh(wndMain);
-
-	twndSize->x_size = ixWin;
-	twndSize->y_size = iOffset;
 }
 
 void InteractData(WINDOW* wndMain, char** arrPrintable, int iSize)
 {
 	int iwndxOffset = 10; // HARDCODE HERE
-	stWindowSize twndSize;
-
-	PrintData(wndMain, &twndSize, arrPrintable, iSize, -1);
-	wresize(wndMain, twndSize.y_size, twndSize.x_size + iwndxOffset + 2);
-
 	int iInterface = 0;
-	int iHighlighted = 0;
+	int iHighlighted = -1;
+
 	while (1) 
 	{
-		PrintData(wndMain, &twndSize, arrPrintable, twndSize.y_size, iHighlighted);
+		PrintData(wndMain, arrPrintable, iSize, iHighlighted);
 
 		iInterface = wgetch(wndMain);
 		switch (iInterface) 
@@ -149,16 +143,16 @@ void InteractData(WINDOW* wndMain, char** arrPrintable, int iSize)
 			case KEY_UP: 
 			{			
 				iHighlighted--;			
-				if (iHighlighted < 3)
-					iHighlighted = 3;	
+				if (iHighlighted < 0)
+					iHighlighted = 0;	
 
 				break;
 			};
 			case KEY_DOWN:
 			{
 				iHighlighted++;
-				if (iHighlighted > twndSize.y_size)
-					iHighlighted = twndSize.y_size;	
+				if (iHighlighted > iSize - 1)
+					iHighlighted = iSize - 1;	
 
 				break;
 			}
