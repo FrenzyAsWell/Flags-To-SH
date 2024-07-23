@@ -12,14 +12,18 @@ typedef struct
 
 } stWindowSize;
 
+typedef struct {
+	char* name_flag;
+	char* text_description;
+} stFlags;
+
 char buffer[256];
 char updated_buffer[256];
 
-void InteractData(WINDOW* wndMain, char** arrErasable, int iSize);
-int GetOptions(char* pCommand, char*** arrOptions);
-void EraseData(char** arrErasable, int iSize);
-void PrintData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted);
-
+void InteractData(WINDOW* wndMain, stFlags* arrErasable, int iSize);
+int GetOptions(char* pCommand, stFlags** arrOptions);
+void EraseData(stFlags* arrErasable, int iSize);
+void PrintData(WINDOW* wndMain, stFlags* arrPrintable, int iSize, int iHighlighted);
 
 int main(int argc, char *argv[])
 {
@@ -29,7 +33,7 @@ int main(int argc, char *argv[])
 		return 1;	
 	}
 	
-	char** arrOptions;
+	stFlags* arrOptions;
 	int iArrSize = GetOptions(argv[argc - 1], &arrOptions);
 
 	initscr();
@@ -50,7 +54,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-int GetOptions(char* pCommand, char*** arrOptions)
+int GetOptions(char* pCommand, stFlags** arrOptions)
 {	
 	char *pNewCommand;
 	FILE *fpHelp;
@@ -91,8 +95,8 @@ int GetOptions(char* pCommand, char*** arrOptions)
 
 		pNewCommand = strtok(updated_buffer, "");
 
-		(*arrOptions)[a] = malloc((strlen(pNewCommand) + 1) * sizeof(char*));
-		strcpy((*arrOptions)[a], pNewCommand);
+		(*arrOptions)[a].name_flag = malloc((strlen(pNewCommand) + 1) * sizeof(char*));
+		strcpy((*arrOptions)[a].name_flag, pNewCommand);
 	}
 
 	fclose(fpHelp);
@@ -100,7 +104,7 @@ int GetOptions(char* pCommand, char*** arrOptions)
 	return iLines;
 }
 
-void PrintData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted)
+void PrintData(WINDOW* wndMain, stFlags* arrPrintable, int iSize, int iHighlighted)
 { 
 	int iwndxOffset = 10; // HARDCODE HERE
 	int ixWin = 0, iyWin = 0;
@@ -111,11 +115,11 @@ void PrintData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted
 		if (a == iHighlighted)
 			wattron(wndMain, A_REVERSE);
 
-		mvwprintw(wndMain, a + 1, 1, "%s\n", arrPrintable[a]);
+		mvwprintw(wndMain, a + 1, 1, "%s\n", arrPrintable[a].name_flag);
 		refresh();
 
-		if (ixWin < strlen(arrPrintable[a])) 
-			ixWin = strlen(arrPrintable[a]);
+		if (ixWin < strlen(arrPrintable[a].name_flag)) 
+			ixWin = strlen(arrPrintable[a].name_flag);
 
 		wattroff(wndMain, A_REVERSE);
 	}
@@ -127,7 +131,7 @@ void PrintData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted
 	wrefresh(wndMain);
 }
 
-void InteractData(WINDOW* wndMain, char** arrPrintable, int iSize)
+void InteractData(WINDOW* wndMain, stFlags* arrPrintable, int iSize)
 {
 	int iwndxOffset = 10; // HARDCODE HERE
 	int iInterface = 0;
@@ -164,10 +168,10 @@ void InteractData(WINDOW* wndMain, char** arrPrintable, int iSize)
 	getch();
 }
 
-void EraseData(char** arrErasable, int iSize)
+void EraseData(stFlags* arrErasable, int iSize)
 {
 	for (int a = 0; a < iSize; a++)
-		if (arrErasable[a] != NULL) 
-			free(arrErasable[a]);
+		if (arrErasable[a].name_flag != NULL) 
+			free(arrErasable[a].name_flag);
 	free(arrErasable);
 }
