@@ -20,10 +20,12 @@ typedef struct {
 char buffer[256];
 char updated_buffer[256];
 
-void InteractData(WINDOW* wndMain, stFlags* arrErasable, int iSize);
+void InteractData(stFlags* arrErasable, int iSize);
 int GetOptions(char* pCommand, stFlags** arrOptions);
-void EraseData(stFlags* arrErasable, int iSize);
-void PrintData(WINDOW* wndMain, stFlags* arrPrintable, int iSize, int iHighlighted);
+void EraseStruct(stFlags* arrErasable, int iSize);
+void EraseCharArray(char** arrErasable, int iSize);
+void PrintData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted);
+stWindowSize GetFitSize(char** arrData, int iSize);
 
 int main(int argc, char *argv[])
 {
@@ -40,14 +42,8 @@ int main(int argc, char *argv[])
 	curs_set(0);
 	noecho();
 
-	int ixMax, iyMax;
-	getmaxyx(stdscr, iyMax, ixMax);
-
-	WINDOW *wndOptions = newwin(iyMax, ixMax, 0, 0);
-	keypad(wndOptions, true);
-
-	InteractData(wndOptions, arrOptions, iArrSize);
-	EraseData(arrOptions, iArrSize);
+	InteractData(arrOptions, iArrSize);
+	EraseStruct(arrOptions, iArrSize);
 
 	endwin();
 
@@ -122,10 +118,24 @@ int GetOptions(char* pCommand, stFlags** arrOptions)
 	return iLines;
 }
 
-void PrintData(WINDOW* wndMain, stFlags* arrPrintable, int iSize, int iHighlighted)
+stWindowSize GetFitSize(char** arrData, int iSize) 
+{
+	stWindowSize twndSize;
+	int ixWin = 0;
+
+	for (int a = 0; a < iSize; a++)
+		if (ixWin < strlen(arrData[a]))
+			ixWin = strlen(arrData[a]);
+	
+	twndSize.y_size = iSize;
+	twndSize.x_size = ixWin;
+	
+	return twndSize;
+}
+
+void PrintData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted)
 { 
 	int iwndxOffset = 10; // HARDCODE HERE
-	int ixWin = 0, iyWin = 0;
 
 	refresh();
 	for (int a = 0; a < iSize; a++)
@@ -133,33 +143,53 @@ void PrintData(WINDOW* wndMain, stFlags* arrPrintable, int iSize, int iHighlight
 		if (a == iHighlighted)
 			wattron(wndMain, A_REVERSE);
 
-		mvwprintw(wndMain, a + 1, 1, "%s\n", arrPrintable[a].name_flag);
+		mvwprintw(wndMain, a + 1, 1, "%s\n", arrPrintable[a]);
 		refresh();
-
-		if (ixWin < strlen(arrPrintable[a].name_flag)) 
-			ixWin = strlen(arrPrintable[a].name_flag);
 
 		wattroff(wndMain, A_REVERSE);
 	}
-
-	iyWin = getmaxy(stdscr);
-	wresize(wndMain, iyWin, ixWin + iwndxOffset + 2);
 
 	box(wndMain, 0, 0);
 	wrefresh(wndMain);
 }
 
-void InteractData(WINDOW* wndMain, stFlags* arrPrintable, int iSize)
+void InteractData(stFlags* arrPrintable, int iSize)
 {
 	int iwndxOffset = 10; // HARDCODE HERE
 	int iInterface = 0;
 	int iHighlighted = -1;
 
+	int ixMax, iyMax;
+	getmaxyx(stdscr, iyMax, ixMax);
+
+	char** arrDataOptions = (char**)malloc(iSize * sizeof(char*));
+	for (int a = 0; a < iSize; a++) 
+	{
+		arrDataOptions[a] = (char*)malloc((strlen(arrPrintable[a].name_flag) + 1) * sizeof(char));
+		strcpy(arrDataOptions[a], arrPrintable[a].name_flag);
+	}
+
+	stWindowSize twndOptionSize = GetFitSize(arrDataOptions, iSize);
+	WINDOW *wndOptions = newwin(iyMax, twndOptionSize.x_size, 0, 0);
+	
+	char** arrDataDescription = (char**)malloc(iSize * sizeof(char*));
+	for (int a = 0; a < iSize; a++) 
+	{
+		arrDataDescription[a] = (char*)malloc((strlen(arrPrintable[a].text_description) + 1) * sizeof(char));
+		strcpy(arrDataDescription[a], arrPrintable[a].text_description);
+	}
+
+	stWindowSize twndDescriptionSize = GetFitSize(arrDataDescription, iSize);
+	WINDOW *wndDesciptions = newwin(iyMax, ixMax - twndOptionSize.x_size, 0, twndOptionSize.x_size);
+
+	keypad(wndOptions, true);
+
 	while (1) 
 	{
-		PrintData(wndMain, arrPrintable, iSize, iHighlighted);
+		PrintData(wndOptions, arrDataOptions, iSize, iHighlighted);
+		PrintData(wndDesciptions, arrDataDescription, iSize, iHighlighted);
 
-		iInterface = wgetch(wndMain);
+		iInterface = wgetch(wndOptions);
 		switch (iInterface) 
 		{
 			case KEY_UP: 
@@ -183,13 +213,25 @@ void InteractData(WINDOW* wndMain, stFlags* arrPrintable, int iSize)
 
 	}
 
+	EraseCharArray(arrDataOptions, iSize);
+	EraseCharArray(arrDataDescription, iSize);
+
 	getch();
 }
 
-void EraseData(stFlags* arrErasable, int iSize)
+void EraseStruct(stFlags* arrErasable, int iSize)
 {
 	for (int a = 0; a < iSize; a++)
-		if (arrErasable[a].name_flag != NULL) 
-			free(arrErasable[a].name_flag);
+	{
+		free(arrErasable[a].name_flag);
+		free(arrErasable[a].text_description);
+	}
+	free(arrErasable);
+}
+
+void EraseCharArray(char** arrErasable, int iSize)
+{
+	for (int a = 0; a < iSize; a++)
+		free(arrErasable[a]);
 	free(arrErasable);
 }
