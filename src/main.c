@@ -15,6 +15,8 @@ typedef struct
 typedef struct {
 	WINDOW* hFlags;
 	char** name_flag;
+
+	int offset;
 } stFlags;
 
 typedef struct {
@@ -35,7 +37,7 @@ char updated_buffer[256];
 void InteractData(stMainWindow arrErasable);
 void GetOptions(stMainWindow* arrOptions, char* pCommand);
 void EraseStruct(stMainWindow arrErasable);
-void PrintData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted);
+void PrintData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted, int* iyOffset);
 stWindowSize GetFitSize(char** arrData, int iSize);
 
 int main(int argc, char *argv[])
@@ -144,25 +146,22 @@ stWindowSize GetFitSize(char** arrData, int iSize)
 	return twndSize;
 }
 
-void PrintData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted)
+void PrintData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted, int* iyOffset)
 { 
-	int iyOffset = 1;
-	if (iHighlighted > getmaxy(wndMain) - 2)
-		iyOffset = iHighlighted - getmaxy(wndMain) - 2;
+	int yMax = getmaxy(wndMain);
+	if (iHighlighted > getmaxy(wndMain) - 3)
+		*iyOffset = iHighlighted - (getmaxy(wndMain) - 3);
 
 	refresh();
-	for (int a = 0; a < iSize; a++)
+	for (int a = 0, b = *iyOffset; b < iSize; a++, b++)
 	{
-		if (a == iHighlighted)
+		if (b == iHighlighted)
 			wattron(wndMain, A_REVERSE);
 
-		mvwprintw(wndMain, a + 1, 1, "%s\n", arrPrintable[a]);
+		mvwprintw(wndMain, a + 1, 1, "%s\n", arrPrintable[b]);
 		refresh();
 
 		wattroff(wndMain, A_REVERSE);
-
-		if (a > getmaxy(wndMain) - 3)
-			break;
 	}
 
 	box(wndMain, 0, 0);
@@ -178,13 +177,14 @@ void InteractData(stMainWindow arrPrintable)
 	getmaxyx(stdscr, iyMax, ixMax);
 
 	stWindowSize twndOptionSize = GetFitSize(arrPrintable.wndFlags.name_flag, arrPrintable.count_options);
-	arrPrintable.wndFlags.hFlags = newwin(iyMax, twndOptionSize.x_size, 0, 0);
+	arrPrintable.wndFlags.hFlags = newwin(getmaxy(stdscr), twndOptionSize.x_size, 0, 0);
 	
 	keypad(arrPrintable.wndFlags.hFlags, true);
 
+	arrPrintable.wndFlags.offset = 0;
 	while (1) 
 	{
-		PrintData(arrPrintable.wndFlags.hFlags, arrPrintable.wndFlags.name_flag, arrPrintable.count_options, iHighlighted);
+		PrintData(arrPrintable.wndFlags.hFlags, arrPrintable.wndFlags.name_flag, arrPrintable.count_options, iHighlighted, &arrPrintable.wndFlags.offset);
 
 		iInterface = wgetch(arrPrintable.wndFlags.hFlags);
 		switch (iInterface) 
@@ -192,8 +192,8 @@ void InteractData(stMainWindow arrPrintable)
 			case KEY_UP: 
 			{			
 				iHighlighted--;			
-				if (iHighlighted < 0)
-					iHighlighted = 0;	
+				if (iHighlighted < arrPrintable.wndFlags.offset)
+					iHighlighted = arrPrintable.wndFlags.offset;	
 
 				break;
 			};
@@ -203,8 +203,6 @@ void InteractData(stMainWindow arrPrintable)
 
 				if (iHighlighted > arrPrintable.count_options - 1)
 					iHighlighted = arrPrintable.count_options - 1;
-				if (iHighlighted > getmaxy(arrPrintable.wndFlags.hFlags) - 3)
-					iHighlighted = getmaxy(arrPrintable.wndFlags.hFlags) - 3;
 
 				break;
 			}
