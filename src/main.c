@@ -93,8 +93,8 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand)
 			iLines++;
 	}
 
-	(*arrOptions).wndFlags.name_flag = malloc(iLines * sizeof(char*));
-	(*arrOptions).wndDescription.text_description = malloc(iLines * sizeof(char*));
+	arrOptions->wndFlags.name_flag = malloc(iLines * sizeof(char*));
+	arrOptions->wndDescription.text_description = malloc(iLines * sizeof(char*));
 
 	fpHelp = popen(pCommand, "r");
 	for (int a = 0; fgets(buffer, sizeof(buffer), fpHelp) != NULL; a++)
@@ -120,8 +120,8 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand)
 		}
 		pNewFlag = strtok(updated_buffer, "");
 
-		(*arrOptions).wndFlags.name_flag[a] = malloc((strlen(pNewFlag) + 1) * sizeof(char*));
-		strcpy((*arrOptions).wndFlags.name_flag[a], pNewFlag);
+		arrOptions->wndFlags.name_flag[a] = malloc((strlen(pNewFlag) + 1) * sizeof(char*));
+		strcpy(arrOptions->wndFlags.name_flag[a], pNewFlag);
 
 		memset(updated_buffer, '\0', sizeof(updated_buffer));
 		for (int b = iPosSymbol + 1, c = 0; b < strlen(buffer) + 1; b++) 
@@ -134,8 +134,8 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand)
 		}
 		pNewDescription = strtok(updated_buffer, "");
 
-		(*arrOptions).wndDescription.text_description[a] = malloc((strlen(pNewDescription) + 1) * sizeof(char*));
-		strcpy((*arrOptions).wndDescription.text_description[a], pNewDescription);
+		arrOptions->wndDescription.text_description[a] = malloc((strlen(pNewDescription) + 1) * sizeof(char*));
+		strcpy(arrOptions->wndDescription.text_description[a], pNewDescription);
 	}
 
 	arrOptions->count_options = iLines;
@@ -168,6 +168,7 @@ void AddSelection(stSelection* object_selection, int iHighlighted)
 			isSelected = true;
 			index = a;
 
+			object_selection->count_selected--;
 			break;
 		}
 
