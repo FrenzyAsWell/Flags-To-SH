@@ -36,6 +36,7 @@ typedef struct {
 
 	stSelection object_selection;
 	int count_options;
+	char* executable_name;
 } stMainWindow;
 
 char buffer[256];
@@ -47,6 +48,7 @@ void EraseStruct(stMainWindow arrErasable);
 void PrintWindowData(stMainWindow wndMain, stWindow wndSub, int iSize, int iHighlighted, int* iyOffset, int* ixOffset);
 void AddSelection(stSelection* object_selection, int iHighlighted);
 void GetFitSize(char** arrData, int iSize, stWindowSize* twndSize);
+int WriteSH(stMainWindow wndMain);
 
 int main(int argc, char *argv[])
 {
@@ -55,7 +57,11 @@ int main(int argc, char *argv[])
 		printf("Help option");
 		return 1;	
 	}
+
 	stMainWindow arrData;
+	arrData.executable_name = malloc(strlen(argv[argc - 1]) * sizeof(argv[argc - 1]));
+	strcpy(arrData.executable_name, argv[argc - 1]);
+
 	GetOptions(&arrData, argv[argc - 1]);
 
 	initscr();
@@ -65,6 +71,8 @@ int main(int argc, char *argv[])
 
 	InteractData(arrData);
 	EraseStruct(arrData);
+
+	free(arrData.executable_name);
 
 	endwin();
 
@@ -221,6 +229,10 @@ void PrintWindowData(stMainWindow wndMain, stWindow wndSub, int iSize, int iHigh
 		case 2:
 			{
 				werase(wndSub.hWindow);
+
+				mvwprintw(wndSub.hWindow, 1, 1, "%s", wndMain.executable_name);
+				*ixOffset += (strlen(wndMain.executable_name) + 1);
+
 				for (int a = 0; a < wndMain.object_selection.count_selected; a++) 
 				{
 					mvwprintw(wndSub.hWindow, 1, *ixOffset + 1, "--%s",  wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]]);
@@ -310,6 +322,7 @@ void InteractData(stMainWindow arrPrintable)
 			}
 			case 121:
 			{
+				WriteSH(arrPrintable);
 				break;
 			}
 			default: break;
@@ -320,11 +333,46 @@ void InteractData(stMainWindow arrPrintable)
 	getch();
 }
 
-void WriteSH()
+int WriteSH(stMainWindow wndMain)
 {
+	if (wndMain.object_selection.count_selected < 1)
+		return 1;
+
 	FILE* fpFile;
 
-	//fpFile = fopen("")
+	char* pCreateSh = "chmod +x ";
+	char* sPostfix = "-edited";
+	char* sNewName = malloc((strlen(sPostfix) + strlen(wndMain.executable_name)) * sizeof(char));
+
+	strcat(sNewName, wndMain.executable_name);
+	strcat(sNewName, sPostfix);
+
+	char* pCommand = malloc(strlen(wndMain.executable_name) * sizeof(char));
+	strcat(pCommand, wndMain.executable_name);
+	for (int a = 0; a < wndMain.object_selection.count_selected; a++)
+	{
+		strcat(pCommand, " --");
+		pCommand = realloc(pCommand, strlen(pCommand) + strlen(wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]]) * sizeof(char));
+		strcat(pCommand, wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]]);
+	}			
+
+	fpFile = fopen(sNewName, "wb");
+
+	fputs(pCommand, fpFile);
+	free(pCommand);
+
+	pCommand = malloc((strlen(pCreateSh) + strlen(sNewName)) * sizeof(char));
+	strcat(pCommand, pCreateSh);
+	strcat(pCommand, sNewName);
+
+	system(pCommand);
+
+	fclose(fpFile);
+
+	free(pCommand);
+	free(sNewName);
+
+	return 0;
 }
 
 void EraseStruct(stMainWindow arrErasable)
