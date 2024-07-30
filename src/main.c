@@ -19,35 +19,19 @@ typedef struct {
 
 typedef struct {
 	WINDOW* hWindow;
-	char** name_flag;
+	int offset;
 
 	stWindowSize object_size;
 	stSelection object_selection;
 
-	int offset;
-	char* window_name;
-} st_wndFlags;
+	char** window_data;
+	const char* window_name;
+} stWindow;
 
 typedef struct {
-	WINDOW* hWindow;
-	stWindowSize object_size;
-
-	char** text_description;
-	char* window_name;
-} st_wndDescription;
-
-typedef struct {
-	WINDOW* hWindow;
-	stWindowSize object_size;
-
-	char** text_result;
-	char* window_name;
-} st_wndResult;
-
-typedef struct {
-	st_wndFlags wndFlags;
-	st_wndDescription wndDescription;
-	st_wndResult wndResult;
+	stWindow wndFlags;
+	stWindow wndDescription;
+	stWindow wndResult;
 
 	int count_options;
 } stMainWindow;
@@ -58,7 +42,7 @@ char updated_buffer[256];
 void InteractData(stMainWindow arrErasable);
 void GetOptions(stMainWindow* arrOptions, char* pCommand);
 void EraseStruct(stMainWindow arrErasable);
-void PrintWindowData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted, stSelection stSelection, int* iyOffset, char* sWindowName);
+void PrintWindowData(stWindow wndMain, int iSize, int iHighlighted, int* iyOffset);
 void AddSelection(stSelection* object_selection, int iHighlighted);
 void GetFitSize(char** arrData, int iSize, stWindowSize* twndSize);
 
@@ -104,8 +88,8 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand)
 			iLines++;
 	}
 
-	arrOptions->wndFlags.name_flag = malloc(iLines * sizeof(char*));
-	arrOptions->wndDescription.text_description = malloc(iLines * sizeof(char*));
+	arrOptions->wndFlags.window_data = malloc(iLines * sizeof(char*));
+	arrOptions->wndDescription.window_data = malloc(iLines * sizeof(char*));
 
 	fpHelp = popen(pCommand, "r");
 	for (int a = 0; fgets(buffer, sizeof(buffer), fpHelp) != NULL; a++)
@@ -131,8 +115,8 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand)
 		}
 		pNewFlag = strtok(updated_buffer, "");
 
-		arrOptions->wndFlags.name_flag[a] = malloc((strlen(pNewFlag) + 1) * sizeof(char*));
-		strcpy(arrOptions->wndFlags.name_flag[a], pNewFlag);
+		arrOptions->wndFlags.window_data[a] = malloc((strlen(pNewFlag) + 1) * sizeof(char*));
+		strcpy(arrOptions->wndFlags.window_data[a], pNewFlag);
 
 		memset(updated_buffer, '\0', sizeof(updated_buffer));
 		for (int b = iPosSymbol + 1, c = 0; b < strlen(buffer) + 1; b++) 
@@ -145,8 +129,8 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand)
 		}
 		pNewDescription = strtok(updated_buffer, "");
 
-		arrOptions->wndDescription.text_description[a] = malloc((strlen(pNewDescription) + 1) * sizeof(char*));
-		strcpy(arrOptions->wndDescription.text_description[a], pNewDescription);
+		arrOptions->wndDescription.window_data[a] = malloc((strlen(pNewDescription) + 1) * sizeof(char*));
+		strcpy(arrOptions->wndDescription.window_data[a], pNewDescription);
 	}
 
 	arrOptions->count_options = iLines;
@@ -194,45 +178,47 @@ void AddSelection(stSelection* object_selection, int iHighlighted)
 	}
 }
 
-void PrintWindowData(WINDOW* wndMain, char** arrPrintable, int iSize, int iHighlighted, stSelection stSelection, int* iyOffset, char* sWindowName)
+void PrintWindowData(stWindow wndMain, int iSize, int iHighlighted, int* iyOffset)
 { 
-	int yMax = getmaxy(wndMain);
-	if (iHighlighted > getmaxy(wndMain) - 3)
-		*iyOffset = iHighlighted - (getmaxy(wndMain) - 3);
+	
+
+	int yMax = getmaxy(wndMain.hWindow);
+	if (iHighlighted > getmaxy(wndMain.hWindow) - 3)
+		*iyOffset = iHighlighted - (getmaxy(wndMain.hWindow) - 3);
 
 	if (iSize > 1)
 		for (int a = 0, b = *iyOffset; b < iSize; a++, b++)
 		{
-			for (int c = 0; c < stSelection.count_selected; c++) 
-				if (stSelection.list_selected[c] == b) 
+			for (int c = 0; c < wndMain.object_selection.count_selected; c++) 
+				if (wndMain.object_selection.list_selected[c] == b) 
 				{
 					init_pair(1, COLOR_GREEN, 0);
-					wattron(wndMain, COLOR_PAIR(1));
+					wattron(wndMain.hWindow, COLOR_PAIR(1));
 
 					break;
 				}
 
 			if (b == iHighlighted)
-				wattron(wndMain, A_REVERSE);
+				wattron(wndMain.hWindow, A_REVERSE);
 
-			mvwprintw(wndMain, a + 1, 1, "%s\n", arrPrintable[b]);
+			mvwprintw(wndMain.hWindow, a + 1, 1, "%s\n", wndMain.window_data[b]);
 			refresh();
 
-			wattroff(wndMain, A_REVERSE);
-			wattroff(wndMain, COLOR_PAIR(1));
+			wattroff(wndMain.hWindow, A_REVERSE);
+			wattroff(wndMain.hWindow, COLOR_PAIR(1));
 		}
 	else
-		if (arrPrintable != NULL)
+		if (wndMain.window_data != NULL)
 		{
-			werase(wndMain);
-			mvwprintw(wndMain, 1, 1, "%s", arrPrintable[iHighlighted]);
+			werase(wndMain.hWindow);
+			mvwprintw(wndMain.hWindow, 1, 1, "%s", wndMain.window_data[iHighlighted]);
 		}
 
 
-	box(wndMain, 0, 0);
+	box(wndMain.hWindow, 0, 0);
 
-	mvwprintw(wndMain, 0, 2, " %s ", sWindowName);
-	wrefresh(wndMain);
+	mvwprintw(wndMain.hWindow, 0, 2, " %s ", wndMain.window_name);
+	wrefresh(wndMain.hWindow);
 }
 
 void InteractData(stMainWindow arrPrintable)
@@ -243,7 +229,7 @@ void InteractData(stMainWindow arrPrintable)
 	int ixMax, iyMax;
 	getmaxyx(stdscr, iyMax, ixMax);
 
-	GetFitSize(arrPrintable.wndFlags.name_flag, arrPrintable.count_options, &arrPrintable.wndFlags.object_size);
+	GetFitSize(arrPrintable.wndFlags.window_data, arrPrintable.count_options, &arrPrintable.wndFlags.object_size);
 	arrPrintable.wndFlags.object_size.x_size += 10;
 	arrPrintable.wndFlags.hWindow = newwin(getmaxy(stdscr), arrPrintable.wndFlags.object_size.x_size, 0, 0);
 	arrPrintable.wndFlags.window_name = "Flags";
@@ -272,29 +258,9 @@ void InteractData(stMainWindow arrPrintable)
 	arrPrintable.wndFlags.offset = 0;
 	while (1) 
 	{
-		PrintWindowData(arrPrintable.wndFlags.hWindow, 
-						arrPrintable.wndFlags.name_flag, 
-						arrPrintable.count_options, 
-						iHighlighted, 
-						arrPrintable.wndFlags.object_selection,
-						&arrPrintable.wndFlags.offset, 
-						arrPrintable.wndFlags.window_name);
-
-		PrintWindowData(arrPrintable.wndDescription.hWindow, 
-						arrPrintable.wndDescription.text_description, 
-						1, 
-						iHighlighted, 
-						arrPrintable.wndFlags.object_selection,
-						&arrPrintable.wndFlags.offset, 
-						arrPrintable.wndDescription.window_name);
-
-		PrintWindowData(arrPrintable.wndResult.hWindow,
-						arrPrintable.wndResult.text_result,
-						1,
-						-1,
-						arrPrintable.wndFlags.object_selection,
-						&arrPrintable.wndFlags.offset,
-						arrPrintable.wndResult.window_name);
+		PrintWindowData(arrPrintable.wndFlags, arrPrintable.count_options, iHighlighted, &arrPrintable.wndFlags.offset);
+		PrintWindowData(arrPrintable.wndDescription, 1, iHighlighted, &arrPrintable.wndFlags.offset);
+		PrintWindowData(arrPrintable.wndResult, 1, -1, &arrPrintable.wndFlags.offset);
 
 		iInterface = wgetch(arrPrintable.wndFlags.hWindow);
 		switch (iInterface) 
@@ -334,10 +300,10 @@ void EraseStruct(stMainWindow arrErasable)
 {
 	for (int a = 0; a < arrErasable.count_options; a++)
 	{
-		free(arrErasable.wndFlags.name_flag[a]);
-		free(arrErasable.wndDescription.text_description[a]);
+		free(arrErasable.wndFlags.window_data[a]);
+		free(arrErasable.wndDescription.window_data[a]);
 	}
 
-	free(arrErasable.wndFlags.name_flag);
-	free(arrErasable.wndDescription.text_description);
+	free(arrErasable.wndFlags.window_data);
+	free(arrErasable.wndDescription.window_data);
 }
