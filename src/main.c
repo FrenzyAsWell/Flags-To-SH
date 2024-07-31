@@ -27,12 +27,23 @@ typedef struct {
 
 	char** window_data;
 	const char* window_name;
-} stWindow;
+} stDisplayWindow;
 
 typedef struct {
-	stWindow wndFlags;
-	stWindow wndDescription;
-	stWindow wndResult;
+	WINDOW* hWindow;
+	int window_id;
+	int offset_y;
+	int offset_x;
+
+	char* window_data;
+	const char* window_name;
+} stSystemWindow;
+
+typedef struct {
+	stDisplayWindow wndFlags;
+	stDisplayWindow wndDescription;
+	stDisplayWindow wndResult;
+	stSystemWindow wndDialog;
 
 	stSelection object_selection;
 	int count_options;
@@ -45,7 +56,7 @@ char updated_buffer[256];
 void InteractData(stMainWindow arrErasable);
 void GetOptions(stMainWindow* arrOptions, char* pCommand);
 void EraseStruct(stMainWindow arrErasable);
-void PrintWindowData(stMainWindow wndMain, stWindow wndSub, int iSize, int iHighlighted, int* iyOffset, int* ixOffset);
+void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, int iHighlighted, int* iyOffset, int* ixOffset);
 void AddSelection(stSelection* object_selection, int iHighlighted);
 void GetFitSize(char** arrData, int iSize, stWindowSize* twndSize);
 int WriteSH(stMainWindow wndMain);
@@ -67,7 +78,6 @@ int main(int argc, char *argv[])
 	initscr();
 	start_color();
 	curs_set(0);
-	noecho();
 
 	InteractData(arrData);
 	EraseStruct(arrData);
@@ -187,7 +197,7 @@ void AddSelection(stSelection* object_selection, int iHighlighted)
 	}
 }
 
-void PrintWindowData(stMainWindow wndMain, stWindow wndSub, int iSize, int iHighlighted, int* iyOffset, int* ixOffset)
+void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, int iHighlighted, int* iyOffset, int* ixOffset)
 { 
 	switch (wndSub.window_id) 
 	{
@@ -263,15 +273,6 @@ void InteractData(stMainWindow arrPrintable)
 	arrPrintable.wndFlags.window_name = "Flags";
 	arrPrintable.wndFlags.window_id = 0;
 
-	arrPrintable.wndResult.object_size.y_size = 3;
-	arrPrintable.wndResult.object_size.x_size = getmaxx(stdscr) - arrPrintable.wndFlags.object_size.x_size;
-	arrPrintable.wndResult.hWindow = newwin(arrPrintable.wndResult.object_size.y_size, 
-											arrPrintable.wndResult.object_size.x_size, 
-											getmaxy(stdscr) - arrPrintable.wndResult.object_size.y_size, 
-											arrPrintable.wndFlags.object_size.x_size);
-	arrPrintable.wndResult.window_name = "Result";
-	arrPrintable.wndDescription.window_id = 1;
-	
 	arrPrintable.wndDescription.object_size.y_size = getmaxy(stdscr) - arrPrintable.wndResult.object_size.y_size;
 	arrPrintable.wndDescription.object_size.x_size = getmaxx(stdscr) - arrPrintable.wndFlags.object_size.x_size;
 	arrPrintable.wndDescription.hWindow = newwin(arrPrintable.wndDescription.object_size.y_size, 
@@ -279,7 +280,20 @@ void InteractData(stMainWindow arrPrintable)
 														0, 
 														arrPrintable.wndFlags.object_size.x_size);
 	arrPrintable.wndDescription.window_name = "Description";
+	arrPrintable.wndDescription.window_id = 1;
+
+	arrPrintable.wndResult.object_size.y_size = 3;
+	arrPrintable.wndResult.object_size.x_size = getmaxx(stdscr) - arrPrintable.wndFlags.object_size.x_size;
+	arrPrintable.wndResult.hWindow = newwin(arrPrintable.wndResult.object_size.y_size, 
+											arrPrintable.wndResult.object_size.x_size, 
+											getmaxy(stdscr) - arrPrintable.wndResult.object_size.y_size, 
+											arrPrintable.wndFlags.object_size.x_size);
+	arrPrintable.wndResult.window_name = "Result";
 	arrPrintable.wndResult.window_id = 2;
+
+	arrPrintable.wndDialog.hWindow = newwin(3, getmaxx(stdscr) / 2, getmaxy(stdscr) / 2, getmaxx(stdscr) / 4);
+	arrPrintable.wndDialog.window_name = "Dialog";
+	arrPrintable.wndDialog.window_id = 3;
 
 	keypad(arrPrintable.wndFlags.hWindow, true);
 
@@ -339,13 +353,20 @@ int WriteSH(stMainWindow wndMain)
 		return 1;
 
 	FILE* fpFile;
-
 	char* pCreateSh = "chmod +x ";
-	char* sPostfix = "-edited";
-	char* sNewName = malloc((strlen(sPostfix) + strlen(wndMain.executable_name)) * sizeof(char));
 
-	strcat(sNewName, wndMain.executable_name);
-	strcat(sNewName, sPostfix);
+	char* sMessage = "Enter name of SH: ";
+	char* sResponse;
+
+	box(wndMain.wndDialog.hWindow, 0, 0);
+
+	mvwprintw(wndMain.wndDialog.hWindow, 0, 2, " %s ", wndMain.wndDialog.window_name);
+	wrefresh(wndMain.wndDialog.hWindow);
+
+	mvwprintw(wndMain.wndDialog.hWindow, 1, 1, "%s", sMessage);
+	mvwscanw(wndMain.wndDialog.hWindow, 1, strlen(sMessage) + 1, "%s", sResponse);
+	if (sResponse == NULL)
+		return 1;	
 
 	char* pCommand = malloc(strlen(wndMain.executable_name) * sizeof(char));
 	strcat(pCommand, wndMain.executable_name);
@@ -356,21 +377,21 @@ int WriteSH(stMainWindow wndMain)
 		strcat(pCommand, wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]]);
 	}			
 
-	fpFile = fopen(sNewName, "wb");
+	fpFile = fopen(sResponse, "wb");
 
 	fputs(pCommand, fpFile);
 	free(pCommand);
 
-	pCommand = malloc((strlen(pCreateSh) + strlen(sNewName)) * sizeof(char));
+	pCommand = malloc((strlen(pCreateSh) + strlen(sResponse)) * sizeof(char));
 	strcat(pCommand, pCreateSh);
-	strcat(pCommand, sNewName);
+	strcat(pCommand, sResponse);
 
 	system(pCommand);
 
 	fclose(fpFile);
+	delwin(wndMain.wndDialog.hWindow);
 
 	free(pCommand);
-	free(sNewName);
 
 	return 0;
 }
