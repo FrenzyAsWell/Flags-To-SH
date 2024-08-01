@@ -62,6 +62,7 @@ void EraseStruct(stMainWindow arrErasable);
 void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, int iHighlighted, int* iyOffset, int* ixOffset);
 void AddSelection(stSelection* object_selection, int iHighlighted);
 void GetFitSize(char** arrData, int iSize, stWindowSize* twndSize);
+void DisplayMessage(stSystemWindow wndMessage, char* sMessage);
 int WriteSH(stMainWindow wndMain);
 
 int main(int argc, char *argv[])
@@ -233,13 +234,6 @@ void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, in
 		}
 		break;
 		case 1:
-			if (wndSub.window_data != NULL)
-			{
-				werase(wndSub.hWindow);
-				mvwprintw(wndSub.hWindow, 1, 1, "%s", wndSub.window_data[iHighlighted]);
-			}
-		break;
-		case 2:
 			{
 				werase(wndSub.hWindow);
 
@@ -252,6 +246,13 @@ void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, in
 					*ixOffset += (strlen(wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]]) + 3);
 				}
 				*ixOffset = 0;
+			}
+		break;
+		case 2:
+			if (wndSub.window_data != NULL)
+			{
+				werase(wndSub.hWindow);
+				mvwprintw(wndSub.hWindow, 1, 1, "%s", wndSub.window_data[iHighlighted]);
 			}
 		break;
 	}
@@ -276,15 +277,6 @@ void InteractData(stMainWindow arrPrintable)
 	arrPrintable.wndFlags.window_name = "Flags";
 	arrPrintable.wndFlags.window_id = 0;
 
-	arrPrintable.wndDescription.object_size.y_size = getmaxy(stdscr) - arrPrintable.wndResult.object_size.y_size;
-	arrPrintable.wndDescription.object_size.x_size = getmaxx(stdscr) - arrPrintable.wndFlags.object_size.x_size;
-	arrPrintable.wndDescription.hWindow = newwin(arrPrintable.wndDescription.object_size.y_size, 
-														arrPrintable.wndDescription.object_size.x_size, 
-														0, 
-														arrPrintable.wndFlags.object_size.x_size);
-	arrPrintable.wndDescription.window_name = "Description";
-	arrPrintable.wndDescription.window_id = 1;
-
 	arrPrintable.wndResult.object_size.y_size = 3;
 	arrPrintable.wndResult.object_size.x_size = getmaxx(stdscr) - arrPrintable.wndFlags.object_size.x_size;
 	arrPrintable.wndResult.hWindow = newwin(arrPrintable.wndResult.object_size.y_size, 
@@ -292,15 +284,24 @@ void InteractData(stMainWindow arrPrintable)
 											getmaxy(stdscr) - arrPrintable.wndResult.object_size.y_size, 
 											arrPrintable.wndFlags.object_size.x_size);
 	arrPrintable.wndResult.window_name = "Result";
-	arrPrintable.wndResult.window_id = 2;
+	arrPrintable.wndResult.window_id = 1;
+
+	arrPrintable.wndDescription.object_size.y_size = getmaxy(stdscr) - arrPrintable.wndResult.object_size.y_size;
+	arrPrintable.wndDescription.object_size.x_size = getmaxx(stdscr) - arrPrintable.wndFlags.object_size.x_size;
+	arrPrintable.wndDescription.hWindow = newwin(arrPrintable.wndDescription.object_size.y_size, 
+														arrPrintable.wndDescription.object_size.x_size, 
+														0, 
+														arrPrintable.wndFlags.object_size.x_size);
+	arrPrintable.wndDescription.window_name = "Description";
+	arrPrintable.wndDescription.window_id = 2;
 
 	arrPrintable.wndDialog.hWindow = newwin(3, getmaxx(stdscr) / 2, getmaxy(stdscr) / 2, getmaxx(stdscr) / 4);
 	arrPrintable.wndDialog.window_name = "Dialog";
 	arrPrintable.wndDialog.window_id = 3;
 
-	arrPrintable.wndDialog.hWindow = newwin(3, getmaxx(stdscr) / 2, getmaxy(stdscr) / 2, getmaxx(stdscr) / 4);
-	arrPrintable.wndDialog.window_name = "Error";
-	arrPrintable.wndDialog.window_id = 4;
+	arrPrintable.wndError.hWindow = newwin(3, getmaxx(stdscr) / 2, getmaxy(stdscr) / 2, getmaxx(stdscr) / 4);
+	arrPrintable.wndError.window_name = "Error";
+	arrPrintable.wndError.window_id = 4;
 
 	keypad(arrPrintable.wndFlags.hWindow, true);
 
@@ -354,6 +355,35 @@ void InteractData(stMainWindow arrPrintable)
 	getch();
 }
 
+void DisplayMessage(stSystemWindow wndMessage, char* sMessage)
+{
+	switch (wndMessage.window_id)
+	{
+		case 3:
+			{
+				init_pair(2, COLOR_YELLOW, 0);
+				wattron(wndMessage.hWindow, 2);
+
+			}
+		break;
+		case 4:
+			{
+				init_pair(3, COLOR_RED, 0);
+				wattron(wndMessage.hWindow, 3);
+			}
+		break;
+	}
+
+	box(wndMessage.hWindow, 0, 0);
+
+	mvwprintw(wndMessage.hWindow, 0, 2, " %s ", wndMessage.window_name);
+	mvwprintw(wndMessage.hWindow, 1, 1, " %s", sMessage);
+	wrefresh(wndMessage.hWindow);
+
+	wattroff(wndMessage.hWindow, 3);
+
+}
+
 int WriteSH(stMainWindow wndMain)
 {
 	if (wndMain.object_selection.count_selected < 1)
@@ -367,15 +397,10 @@ int WriteSH(stMainWindow wndMain)
 	char sResponse[32];
 	char* sPrevigies = NULL;
 
-	box(wndMain.wndDialog.hWindow, 0, 0);
-
-	mvwprintw(wndMain.wndDialog.hWindow, 0, 2, " %s ", wndMain.wndDialog.window_name);
-	wrefresh(wndMain.wndDialog.hWindow);
-
-	mvwprintw(wndMain.wndDialog.hWindow, 1, 1, "%s", sMessage);
+	DisplayMessage(wndMain.wndDialog, sMessage);
 	mvwgetnstr(wndMain.wndDialog.hWindow, 1, strlen(sMessage) + 1, sResponse, 32);
 
-	delwin(wndMain.wndDialog.hWindow);
+	werase(wndMain.wndDialog.hWindow);
 
 	char* pCommand = malloc(strlen(wndMain.executable_name) * sizeof(char));
 	strcat(pCommand, wndMain.executable_name);
@@ -386,20 +411,16 @@ int WriteSH(stMainWindow wndMain)
 		strcat(pCommand, wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]]);
 	}			
 
-	if (access(sResponse, F_OK))
+	fpFile = fopen(sResponse, "r");
+	if (fpFile != NULL)
 	{
-		init_pair(2, COLOR_RED, 0);
-		wattron(wndMain.wndError.hWindow, 2);
-
-		box(wndMain.wndError.hWindow, 0, 0);
-
-		mvwprintw(wndMain.wndError.hWindow, 0, 2, " %s ", wndMain.wndError.window_name);
-		mvwprintw(wndMain.wndError.hWindow, 1, 1, " %s", sErrorFileExist);
-		wrefresh(wndMain.wndError.hWindow);
-
-		wattroff(wndMain.wndError.hWindow, 2);
-
+		DisplayMessage(wndMain.wndError, sErrorFileExist);
 		char sAnswer = mvwgetch(wndMain.wndError.hWindow, 1, strlen(sErrorFileExist) + 1);
+
+		if (sAnswer == 'y')
+			return 1;
+
+		fclose(fpFile);
 	}
 
 	fpFile = fopen(sResponse, "wb");
@@ -416,7 +437,7 @@ int WriteSH(stMainWindow wndMain)
 	system(pCommand);
 
 	fclose(fpFile);
-	delwin(wndMain.wndDialog.hWindow);
+	werase(wndMain.wndError.hWindow);
 
 	free(pCommand);
 
