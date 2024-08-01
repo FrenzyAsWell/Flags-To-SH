@@ -52,6 +52,15 @@ typedef struct {
 char buffer[256];
 char updated_buffer[256];
 
+enum 
+{
+	WND_FLAGS = 1,
+	WND_RESULT = 2,
+	WND_DESCRIPTION = 3,
+	WND_DIALOG = 4,
+	WND_ERROR = 5
+};
+
 void InteractData(stMainWindow arrErasable);
 void GetOptions(stMainWindow* arrOptions, char* pCommand);
 void EraseStruct(stMainWindow arrErasable);
@@ -201,7 +210,7 @@ void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, in
 { 
 	switch (wndSub.window_id) 
 	{
-		case 0:
+		case WND_FLAGS:
 		{
 			int yMax = getmaxy(wndSub.hWindow);
 			if (iHighlighted > getmaxy(wndSub.hWindow) - 3)
@@ -229,7 +238,7 @@ void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, in
 			}
 		}
 		break;
-		case 1:
+		case WND_RESULT:
 			{
 				werase(wndSub.hWindow);
 
@@ -244,7 +253,7 @@ void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, in
 				*ixOffset = 0;
 			}
 		break;
-		case 2:
+		case WND_DESCRIPTION:
 			if (wndSub.window_data != NULL)
 			{
 				werase(wndSub.hWindow);
@@ -272,23 +281,23 @@ void InteractData(stMainWindow arrPrintable)
 
 	arrPrintable.wndFlags.hWindow = newwin(getmaxy(stdscr), twndSize.x_size + 10, 0, 0);
 	arrPrintable.wndFlags.window_name = "Flags";
-	arrPrintable.wndFlags.window_id = 0;
+	arrPrintable.wndFlags.window_id = WND_FLAGS;
 
 	arrPrintable.wndResult.hWindow = newwin(3, getmaxx(stdscr) - getmaxx(arrPrintable.wndFlags.hWindow), getmaxy(stdscr) - 3, getmaxx(arrPrintable.wndFlags.hWindow));
 	arrPrintable.wndResult.window_name = "Result";
-	arrPrintable.wndResult.window_id = 1;
+	arrPrintable.wndResult.window_id = WND_RESULT;
 
 	arrPrintable.wndDescription.hWindow = newwin(getmaxy(stdscr) - getmaxy(arrPrintable.wndResult.hWindow), getmaxx(stdscr) - getmaxx(arrPrintable.wndFlags.hWindow), 0, getmaxx(arrPrintable.wndFlags.hWindow));
 	arrPrintable.wndDescription.window_name = "Description";
-	arrPrintable.wndDescription.window_id = 2;
+	arrPrintable.wndDescription.window_id = WND_DESCRIPTION;
 
 	arrPrintable.wndDialog.hWindow = newwin(3, getmaxx(stdscr) / 2, getmaxy(stdscr) / 2, getmaxx(stdscr) / 4);
 	arrPrintable.wndDialog.window_name = "Dialog";
-	arrPrintable.wndDialog.window_id = 3;
+	arrPrintable.wndDialog.window_id = WND_DIALOG;
 
 	arrPrintable.wndError.hWindow = newwin(3, getmaxx(stdscr) / 2, getmaxy(stdscr) / 2, getmaxx(stdscr) / 4);
 	arrPrintable.wndError.window_name = "Error";
-	arrPrintable.wndError.window_id = 4;
+	arrPrintable.wndError.window_id = WND_ERROR;
 
 	keypad(arrPrintable.wndFlags.hWindow, true);
 
@@ -346,17 +355,18 @@ void DisplayMessage(stSystemWindow wndMessage, char* sMessage)
 {
 	switch (wndMessage.window_id)
 	{
-		case 3:
+		case WND_DIALOG:
 			{
 				init_pair(2, COLOR_YELLOW, 0);
 				wattron(wndMessage.hWindow, 2);
 
 			}
 		break;
-		case 4:
+		case WND_ERROR:
 			{
 				init_pair(3, COLOR_RED, 0);
 				wattron(wndMessage.hWindow, 3);
+				//wresize(wndMessage.hWindow, getmaxy(wndMessage.hWindow), strlen(sMessage) + 2);
 			}
 		break;
 	}
@@ -411,6 +421,11 @@ int WriteSH(stMainWindow wndMain)
 	}
 
 	fpFile = fopen(sResponse, "wb");
+	if (fpFile == NULL)
+	{
+		DisplayMessage(wndMain.wndError, "Can't create window");
+		return 1;
+	}	
 
 	fputs(pCommand, fpFile);
 	free(pCommand);
