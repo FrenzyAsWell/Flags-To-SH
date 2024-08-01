@@ -81,7 +81,6 @@ int main(int argc, char *argv[])
 	initscr();
 	start_color();
 	curs_set(0);
-	noecho();
 
 	InteractData(arrData);
 	EraseStruct(arrData);
@@ -414,7 +413,7 @@ int WriteSH(stMainWindow wndMain)
 	memset(pCommand, '\0', strlen(pCreateSh) + strlen(sResponse));
 
 	strcat(pCommand, pCreateSh);
-	strcat(pCommand, sNewName);
+	strcat(pCommand, sResponse);
 
 	system(pCommand);
 
