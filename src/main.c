@@ -25,8 +25,6 @@ typedef struct {
 	int offset_y;
 	int offset_x;
 
-	stWindowSize object_size;
-
 	char** window_data;
 	const char* window_name;
 } stDisplayWindow;
@@ -34,8 +32,6 @@ typedef struct {
 typedef struct {
 	WINDOW* hWindow;
 	int window_id;
-	int offset_y;
-	int offset_x;
 
 	char* window_data;
 	const char* window_name;
@@ -270,28 +266,19 @@ void InteractData(stMainWindow arrPrintable)
 
 	int ixMax, iyMax;
 	getmaxyx(stdscr, iyMax, ixMax);
+	stWindowSize twndSize;
 
-	GetFitSize(arrPrintable.wndFlags.window_data, arrPrintable.count_options, &arrPrintable.wndFlags.object_size);
-	arrPrintable.wndFlags.object_size.x_size += 10;
-	arrPrintable.wndFlags.hWindow = newwin(getmaxy(stdscr), arrPrintable.wndFlags.object_size.x_size, 0, 0);
+	GetFitSize(arrPrintable.wndFlags.window_data, arrPrintable.count_options, &twndSize);
+
+	arrPrintable.wndFlags.hWindow = newwin(getmaxy(stdscr), twndSize.x_size + 10, 0, 0);
 	arrPrintable.wndFlags.window_name = "Flags";
 	arrPrintable.wndFlags.window_id = 0;
 
-	arrPrintable.wndResult.object_size.y_size = 3;
-	arrPrintable.wndResult.object_size.x_size = getmaxx(stdscr) - arrPrintable.wndFlags.object_size.x_size;
-	arrPrintable.wndResult.hWindow = newwin(arrPrintable.wndResult.object_size.y_size, 
-											arrPrintable.wndResult.object_size.x_size, 
-											getmaxy(stdscr) - arrPrintable.wndResult.object_size.y_size, 
-											arrPrintable.wndFlags.object_size.x_size);
+	arrPrintable.wndResult.hWindow = newwin(3, getmaxx(stdscr) - getmaxx(arrPrintable.wndFlags.hWindow), getmaxy(stdscr) - 3, getmaxx(arrPrintable.wndFlags.hWindow));
 	arrPrintable.wndResult.window_name = "Result";
 	arrPrintable.wndResult.window_id = 1;
 
-	arrPrintable.wndDescription.object_size.y_size = getmaxy(stdscr) - arrPrintable.wndResult.object_size.y_size;
-	arrPrintable.wndDescription.object_size.x_size = getmaxx(stdscr) - arrPrintable.wndFlags.object_size.x_size;
-	arrPrintable.wndDescription.hWindow = newwin(arrPrintable.wndDescription.object_size.y_size, 
-														arrPrintable.wndDescription.object_size.x_size, 
-														0, 
-														arrPrintable.wndFlags.object_size.x_size);
+	arrPrintable.wndDescription.hWindow = newwin(getmaxy(stdscr) - getmaxy(arrPrintable.wndResult.hWindow), getmaxx(stdscr) - getmaxx(arrPrintable.wndFlags.hWindow), 0, getmaxx(arrPrintable.wndFlags.hWindow));
 	arrPrintable.wndDescription.window_name = "Description";
 	arrPrintable.wndDescription.window_id = 2;
 
