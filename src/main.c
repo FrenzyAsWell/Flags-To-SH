@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+
 #include <ncurses.h>
 
 #define ARG_INPUT_COMMAND 2
@@ -27,12 +29,24 @@ typedef struct {
 
 	char** window_data;
 	const char* window_name;
-} stWindow;
+} stDisplayWindow;
 
 typedef struct {
-	stWindow wndFlags;
-	stWindow wndDescription;
-	stWindow wndResult;
+	WINDOW* hWindow;
+	int window_id;
+	int offset_y;
+	int offset_x;
+
+	char* window_data;
+	const char* window_name;
+} stSystemWindow;
+
+typedef struct {
+	stDisplayWindow wndFlags;
+	stDisplayWindow wndDescription;
+	stDisplayWindow wndResult;
+	stSystemWindow wndDialog;
+	stSystemWindow wndError;
 
 	stSelection object_selection;
 	int count_options;
@@ -45,7 +59,7 @@ char updated_buffer[256];
 void InteractData(stMainWindow arrErasable);
 void GetOptions(stMainWindow* arrOptions, char* pCommand);
 void EraseStruct(stMainWindow arrErasable);
-void PrintWindowData(stMainWindow wndMain, stWindow wndSub, int iSize, int iHighlighted, int* iyOffset, int* ixOffset);
+void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, int iHighlighted, int* iyOffset, int* ixOffset);
 void AddSelection(stSelection* object_selection, int iHighlighted);
 void GetFitSize(char** arrData, int iSize, stWindowSize* twndSize);
 int WriteSH(stMainWindow wndMain);
@@ -187,7 +201,7 @@ void AddSelection(stSelection* object_selection, int iHighlighted)
 	}
 }
 
-void PrintWindowData(stMainWindow wndMain, stWindow wndSub, int iSize, int iHighlighted, int* iyOffset, int* ixOffset)
+void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, int iHighlighted, int* iyOffset, int* ixOffset)
 { 
 	switch (wndSub.window_id) 
 	{
@@ -281,6 +295,14 @@ void InteractData(stMainWindow arrPrintable)
 	arrPrintable.wndDescription.window_name = "Description";
 	arrPrintable.wndResult.window_id = 2;
 
+	arrPrintable.wndDialog.hWindow = newwin(3, getmaxx(stdscr) / 2, getmaxy(stdscr) / 2, getmaxx(stdscr) / 4);
+	arrPrintable.wndDialog.window_name = "Dialog";
+	arrPrintable.wndDialog.window_id = 3;
+
+	arrPrintable.wndDialog.hWindow = newwin(3, getmaxx(stdscr) / 2, getmaxy(stdscr) / 2, getmaxx(stdscr) / 4);
+	arrPrintable.wndDialog.window_name = "Error";
+	arrPrintable.wndDialog.window_id = 4;
+
 	keypad(arrPrintable.wndFlags.hWindow, true);
 
 	arrPrintable.object_selection.count_selected = 0;
@@ -344,8 +366,19 @@ int WriteSH(stMainWindow wndMain)
 	char* sPostfix = "-edited";
 	char* sNewName = malloc((strlen(sPostfix) + strlen(wndMain.executable_name)) * sizeof(char));
 
-	strcat(sNewName, wndMain.executable_name);
-	strcat(sNewName, sPostfix);
+	char* sMessage = "Enter name of SH: ";
+	char* sErrorFileExist = "Do you want to rewrite file? [y]: ";
+	char sResponse[32];
+	char* sPrevigies = NULL;
+
+	box(wndMain.wndDialog.hWindow, 0, 0);
+
+	mvwprintw(wndMain.wndDialog.hWindow, 0, 2, " %s ", wndMain.wndDialog.window_name);
+	wrefresh(wndMain.wndDialog.hWindow);
+
+	mvwprintw(wndMain.wndDialog.hWindow, 1, 1, "%s", sMessage);
+	mvwgetnstr(wndMain.wndDialog.hWindow, 1, strlen(sMessage) + 1, sResponse, 32);
+	delwin(wndMain.wndDialog.hWindow);
 
 	char* pCommand = malloc(strlen(wndMain.executable_name) * sizeof(char));
 	strcat(pCommand, wndMain.executable_name);
@@ -356,12 +389,30 @@ int WriteSH(stMainWindow wndMain)
 		strcat(pCommand, wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]]);
 	}			
 
-	fpFile = fopen(sNewName, "wb");
+	if (access(sResponse, F_OK))
+	{
+		init_pair(2, COLOR_RED, 0);
+		wattron(wndMain.wndError.hWindow, 2);
+
+		box(wndMain.wndError.hWindow, 0, 0);
+
+		mvwprintw(wndMain.wndError.hWindow, 0, 2, " %s ", wndMain.wndError.window_name);
+		mvwprintw(wndMain.wndError.hWindow, 1, 1, " %s", sErrorFileExist);
+		wrefresh(wndMain.wndError.hWindow);
+
+		wattroff(wndMain.wndError.hWindow, 2);
+
+		char sAnswer = mvwgetch(wndMain.wndError.hWindow, 1, strlen(sErrorFileExist) + 1);
+	}
+
+	fpFile = fopen(sResponse, "wb");
 
 	fputs(pCommand, fpFile);
 	free(pCommand);
 
-	pCommand = malloc((strlen(pCreateSh) + strlen(sNewName)) * sizeof(char));
+	pCommand = malloc((strlen(pCreateSh) + strlen(sResponse)) * sizeof(char));
+	memset(pCommand, '\0', strlen(pCreateSh) + strlen(sResponse));
+
 	strcat(pCommand, pCreateSh);
 	strcat(pCommand, sNewName);
 
