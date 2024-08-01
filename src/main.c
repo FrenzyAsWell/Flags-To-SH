@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+
 #include <ncurses.h>
 
 #define ARG_INPUT_COMMAND 2
@@ -44,6 +46,7 @@ typedef struct {
 	stDisplayWindow wndDescription;
 	stDisplayWindow wndResult;
 	stSystemWindow wndDialog;
+	stSystemWindow wndError;
 
 	stSelection object_selection;
 	int count_options;
@@ -295,6 +298,10 @@ void InteractData(stMainWindow arrPrintable)
 	arrPrintable.wndDialog.window_name = "Dialog";
 	arrPrintable.wndDialog.window_id = 3;
 
+	arrPrintable.wndDialog.hWindow = newwin(3, getmaxx(stdscr) / 2, getmaxy(stdscr) / 2, getmaxx(stdscr) / 4);
+	arrPrintable.wndDialog.window_name = "Error";
+	arrPrintable.wndDialog.window_id = 4;
+
 	keypad(arrPrintable.wndFlags.hWindow, true);
 
 	arrPrintable.object_selection.count_selected = 0;
@@ -356,6 +363,7 @@ int WriteSH(stMainWindow wndMain)
 	char* pCreateSh = "chmod +x ";
 
 	char* sMessage = "Enter name of SH: ";
+	char* sErrorFileExist = "Do you want to rewrite file? [y]: ";
 	char sResponse[32];
 	char* sPrevigies = NULL;
 
@@ -367,6 +375,8 @@ int WriteSH(stMainWindow wndMain)
 	mvwprintw(wndMain.wndDialog.hWindow, 1, 1, "%s", sMessage);
 	mvwgetnstr(wndMain.wndDialog.hWindow, 1, strlen(sMessage) + 1, sResponse, 32);
 
+	delwin(wndMain.wndDialog.hWindow);
+
 	char* pCommand = malloc(strlen(wndMain.executable_name) * sizeof(char));
 	strcat(pCommand, wndMain.executable_name);
 	for (int a = 0; a < wndMain.object_selection.count_selected; a++)
@@ -376,13 +386,29 @@ int WriteSH(stMainWindow wndMain)
 		strcat(pCommand, wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]]);
 	}			
 
+	if (access(sResponse, F_OK))
+	{
+		init_pair(2, COLOR_RED, 0);
+		wattron(wndMain.wndError.hWindow, 2);
+
+		box(wndMain.wndError.hWindow, 0, 0);
+
+		mvwprintw(wndMain.wndError.hWindow, 0, 2, " %s ", wndMain.wndError.window_name);
+		mvwprintw(wndMain.wndError.hWindow, 1, 1, " %s", sErrorFileExist);
+		wrefresh(wndMain.wndError.hWindow);
+
+		wattroff(wndMain.wndError.hWindow, 2);
+
+		char sAnswer = mvwgetch(wndMain.wndError.hWindow, 1, strlen(sErrorFileExist) + 1);
+	}
+
 	fpFile = fopen(sResponse, "wb");
 
 	fputs(pCommand, fpFile);
 	free(pCommand);
 
-	sPrevigies = malloc((strlen(pCreateSh) + strlen(sResponse)) * sizeof(char));
-	memset(sPrevigies, '\0', strlen(pCreateSh) + strlen(sResponse));
+	pCommand = malloc((strlen(pCreateSh) + strlen(sResponse)) * sizeof(char));
+	memset(pCommand, '\0', strlen(pCreateSh) + strlen(sResponse));
 
 	strcat(pCommand, pCreateSh);
 	strcat(pCommand, sResponse);
