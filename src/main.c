@@ -356,7 +356,8 @@ int WriteSH(stMainWindow wndMain)
 	char* pCreateSh = "chmod +x ";
 
 	char* sMessage = "Enter name of SH: ";
-	char* sResponse;
+	char sResponse[32];
+	char* sPrevigies = NULL;
 
 	box(wndMain.wndDialog.hWindow, 0, 0);
 
@@ -364,9 +365,7 @@ int WriteSH(stMainWindow wndMain)
 	wrefresh(wndMain.wndDialog.hWindow);
 
 	mvwprintw(wndMain.wndDialog.hWindow, 1, 1, "%s", sMessage);
-	mvwscanw(wndMain.wndDialog.hWindow, 1, strlen(sMessage) + 1, "%s", sResponse);
-	if (sResponse == NULL)
-		return 1;	
+	mvwgetnstr(wndMain.wndDialog.hWindow, 1, strlen(sMessage) + 1, sResponse, 32);
 
 	char* pCommand = malloc(strlen(wndMain.executable_name) * sizeof(char));
 	strcat(pCommand, wndMain.executable_name);
@@ -382,7 +381,9 @@ int WriteSH(stMainWindow wndMain)
 	fputs(pCommand, fpFile);
 	free(pCommand);
 
-	pCommand = malloc((strlen(pCreateSh) + strlen(sResponse)) * sizeof(char));
+	sPrevigies = malloc((strlen(pCreateSh) + strlen(sResponse)) * sizeof(char));
+	memset(sPrevigies, '\0', strlen(pCreateSh) + strlen(sResponse));
+
 	strcat(pCommand, pCreateSh);
 	strcat(pCommand, sResponse);
 
