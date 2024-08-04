@@ -387,7 +387,6 @@ int WriteSH(stMainWindow wndMain)
 		return 1;
 
 	FILE* fpFile;
-	char* pCreateSh = "chmod +x ";
 
 	char* sMessage = "Enter name of SH: ";
 	char* sErrorFileExist = "Do you want to rewrite file? [y]: ";
@@ -428,20 +427,10 @@ int WriteSH(stMainWindow wndMain)
 	}	
 
 	fputs(pCommand, fpFile);
-	free(pCommand);
-
-	pCommand = malloc((strlen(pCreateSh) + strlen(sResponse)) * sizeof(char));
-	memset(pCommand, '\0', strlen(pCreateSh) + strlen(sResponse));
-
-	strcat(pCommand, pCreateSh);
-	strcat(pCommand, sResponse);
-
 	chmod(sResponse, S_IRUSR | S_IWUSR | S_IXUSR);
 
 	fclose(fpFile);
 	werase(wndMain.wndError.hWindow);
-
-	free(pCommand);
 
 	return 0;
 }
