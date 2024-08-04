@@ -1,9 +1,10 @@
-#include <stdio.h>
+#include <stdio.h> 
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include <ncurses.h>
+#include <sys/stat.h>
 
 #define ARG_INPUT_COMMAND 2
 
@@ -13,7 +14,6 @@ typedef struct
 	int y_size;
 
 } stWindowSize;
-
 typedef struct {
 	int* list_selected;
 	int count_selected;
@@ -436,7 +436,7 @@ int WriteSH(stMainWindow wndMain)
 	strcat(pCommand, pCreateSh);
 	strcat(pCommand, sResponse);
 
-	system(pCommand);
+	chmod(sResponse, S_IRUSR | S_IWUSR | S_IXUSR);
 
 	fclose(fpFile);
 	werase(wndMain.wndError.hWindow);
