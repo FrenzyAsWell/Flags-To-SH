@@ -74,7 +74,7 @@ void PrintWindowData(char* sExecName, stSelection objSelection, stDisplayWindow 
 void AddSelection(stSelection* object_selection, int iHighlighted);
 void GetFitSize(stDataField* arrData, int iSize, stWindowSize* twndSize);
 char* DisplayMessage(int _id, char* sMessage);
-void SetParameter(stDataField* wndFlags, int iHighlighted);
+int SetParameter(stDataField* wndFlags, int iHighlighted);
 int WriteSH(stSelection objSelection, char* sExecName, stDataField* wndFlags);
 
 int main(int argc, char *argv[])
@@ -248,19 +248,20 @@ void PrintWindowData(char* sExecName, stSelection objSelection, stDisplayWindow 
 				werase(wndSub.hWindow);
 
 				mvwprintw(wndSub.hWindow, 1, 1, "%s", sExecName);
-				*ixOffset += (strlen(sExecName) + 1);
+				*ixOffset += strlen(sExecName) + 1;
 
-				for (int a = 0; a < objSelection.count_selected; a++) 
+				for (int it = 0; it < objSelection.count_selected; it++) 
 				{
-					if (_data[a].param != NULL) 
+					int it_selected = objSelection.list_selected[it];
+					if (_data[it_selected].param != NULL) 
 					{
-						mvwprintw(wndSub.hWindow, 1, *ixOffset + 1, "--%s=%s",  _data[objSelection.list_selected[a]].data, _data[objSelection.list_selected[a]].param);
-						*ixOffset += (strlen(_data[objSelection.list_selected[a]].data + strlen(_data[objSelection.list_selected[a]].param)) + 3);
+						mvwprintw(wndSub.hWindow, 1, *ixOffset + 1, "--%s=%s",  _data[it_selected].data, _data[it_selected].param);
+						*ixOffset += strlen(_data[it_selected].data) + strlen(_data[it_selected].param) + 4;
 					}
 					else
 					{
-						mvwprintw(wndSub.hWindow, 1, *ixOffset + 1, "--%s", _data[objSelection.list_selected[a]].data);
-						*ixOffset += (strlen(_data[objSelection.list_selected[a]].data) + 3);
+						mvwprintw(wndSub.hWindow, 1, *ixOffset + 1, "--%s", _data[objSelection.list_selected[it]].data);
+						*ixOffset += strlen(_data[objSelection.list_selected[it]].data) + 3;
 					}
 				}
 				*ixOffset = 0;
@@ -349,11 +350,14 @@ void InteractData(stMainWindow arrPrintable)
 	getch();
 }
 
-void SetParameter(stDataField* wndFlags, int iHighlighted)
+int SetParameter(stDataField* wndFlags, int iHighlighted)
 {
 	char* sResponse = DisplayMessage(WND_DIALOG, "Add value: ");
 
-	wndFlags[iHighlighted].param = sResponse;
+	wndFlags[iHighlighted].param = malloc((strlen(sResponse) + 1) * sizeof(char*));
+	strcpy(wndFlags[iHighlighted].param, sResponse);
+
+	return 0;
 }
 
 char* DisplayMessage(int _id, char* sMessage)
@@ -395,6 +399,7 @@ char* DisplayMessage(int _id, char* sMessage)
 	mvwgetstr(wndMessage.hWindow, 1, strlen(sMessage) + 1, sResponse);
 
 	werase(wndMessage.hWindow);
+	delwin(wndMessage.hWindow);
 
 	char* sReturn = malloc(strlen(sResponse) * sizeof(char));
 	strcpy(sReturn, sResponse);
@@ -413,12 +418,21 @@ int WriteSH(stSelection objSelection, char* sExecName, stDataField* wndFlags)
 	char* sResponse = DisplayMessage(WND_DIALOG, "Enter name of SH: ");
 
 	char* pCommand = malloc(strlen(sExecName) * sizeof(char));
-	strcat(pCommand, sExecName);
-	for (int a = 0; a < objSelection.count_selected; a++)
+	strcpy(pCommand, sExecName);
+	for (int it = 0; it < objSelection.count_selected; it++)
 	{
+		int it_selected = objSelection.list_selected[it];
+
 		strcat(pCommand, " --");
-		pCommand = realloc(pCommand, strlen(pCommand) + strlen(wndFlags[objSelection.list_selected[a]].data) * sizeof(char));
-		strcat(pCommand, wndFlags[objSelection.list_selected[a]].data);
+		pCommand = realloc(pCommand, strlen(pCommand) + strlen(wndFlags[it_selected].data) * sizeof(char));
+		strcat(pCommand, wndFlags[it_selected].data);
+
+		if (wndFlags[it_selected].param != NULL)
+		{
+			strcat(pCommand, "=");
+			pCommand = realloc(pCommand, strlen(pCommand) + strlen(wndFlags[it_selected].param) * sizeof(char));
+			strcat(pCommand, wndFlags[it_selected].param);
+		}
 	}			
 
 	fpFile = fopen(sResponse, "r");
