@@ -165,8 +165,7 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand)
 	fclose(fpHelp);
 }
 
-void GetFitSize(char** arrData, int iSize, stWindowSize* twndSize) 
-{
+void GetFitSize(char** arrData, int iSize, stWindowSize* twndSize) {
 	int ixWin = 0;
 
 	for (int a = 0; a < iSize; a++)
@@ -315,35 +314,28 @@ void InteractData(stMainWindow arrPrintable)
 		iInterface = wgetch(arrPrintable.wndFlags.hWindow);
 		switch (iInterface) 
 		{
+			case 107:
 			case KEY_UP: 
 			{			
 				iHighlighted--;			
 				if (iHighlighted < arrPrintable.wndFlags.offset_y)
 					iHighlighted = arrPrintable.wndFlags.offset_y;	
-
-				break;
 			};
+			break;
+
+			case 106:
 			case KEY_DOWN:
 			{
 				iHighlighted++;
 
 				if (iHighlighted > arrPrintable.count_options - 1)
 					iHighlighted = arrPrintable.count_options - 1;
+			};
+			break;
 
-				break;
-			}
-			case 10:
-			{
-				AddSelection(&arrPrintable.object_selection, iHighlighted);
-
-				break;
-			}
-			case 121:
-			{
-				WriteSH(arrPrintable);
-				break;
-			}
-			default: break;
+			case 10: AddSelection(&arrPrintable.object_selection, iHighlighted); break;
+			case 121: WriteSH(arrPrintable); break;
+			case 101: break;
 		}
 
 	}
@@ -359,15 +351,13 @@ void DisplayMessage(stSystemWindow wndMessage, char* sMessage)
 			{
 				init_pair(2, COLOR_YELLOW, 0);
 				wattron(wndMessage.hWindow, 2);
-
-			}
+			};
 		break;
 		case WND_ERROR:
 			{
 				init_pair(3, COLOR_RED, 0);
 				wattron(wndMessage.hWindow, 3);
-				//wresize(wndMessage.hWindow, getmaxy(wndMessage.hWindow), strlen(sMessage) + 2);
-			}
+			};
 		break;
 	}
 
@@ -430,6 +420,8 @@ int WriteSH(stMainWindow wndMain)
 	chmod(sResponse, S_IRUSR | S_IWUSR | S_IXUSR);
 
 	fclose(fpFile);
+	free(pCommand);
+
 	werase(wndMain.wndError.hWindow);
 
 	return 0;
