@@ -4,23 +4,23 @@
 
 - **Info**
   
-  - Desciption
+  - [Description](#Desciption)
   
-  - Features
+  - [Features](#Features)
   
-  - Gallery & Video
+  - [Gallery & Video](#Non)
 
 - **Installation**
   
-  - Using Git
+  - [Using Git](#Using-Git)
   
-  - Binary releases
+  - [Binary releases](#Binary-Releases)
 
 - **Usage**
   
-  - Hotkeys
+  - [Hotkeys](#Hotkeys)
   
-  - Tips
+  - [Tips](#Tips)
 
 - ***SAMPLE***
 
@@ -28,13 +28,11 @@
 
 ## **Info**
 
-___
-
 ### ***Description***
 
-> ***Flags-to-SH***  is a TUI tool, which simplify creating custom scripts, refering to specified application with included flags
-> 
-> These project also implement [Ncurses API](https://invisible-island.net/ncurses/) as render framework.
+***Flags-to-SH***  is a TUI tool, which simplify creating custom scripts, refering to specified application with included flags
+ 
+These project also implement [Ncurses API](https://invisible-island.net/ncurses/) as render framework.
 
 ### ***Features***
 
@@ -47,8 +45,6 @@ ___
 ### *Gallery & Video*
 
 ## Installation
-
-___
 
 ### ***Using Git***
 
@@ -66,8 +62,6 @@ Binary releases are avaliable from GitHub page:
 - [Latest](https://github.com/FrenzyAsWell/Flags-To-SH/releases/latest)
 
 ## Usage
-
-___
 
 Run ***Flags-to-SH*** wih name of executable, which you want to create scripts from:
 
@@ -95,12 +89,10 @@ flags-to-sh <exec-name>
 
  
 
-## License ([~]((https://github.com/FrenzyAsWell/Flags-To-SH/blob/main/LICENSE)))
+## License
 
-___
+[GNU GENERAL PUBLIC LICENSE](https://github.com/FrenzyAsWell/Flags-To-SH/blob/main/LICENSE) - Version 3, 29 June 2007
 
-The MIT License (MIT
-
-**Copyright (c) 2024** - *Yan Moiseev*
+**2024** - *Yan Moiseev*
 
 
