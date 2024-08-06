@@ -31,7 +31,6 @@ typedef struct {
 	int offset_y;
 	int offset_x;
 
-	stDataField* window_data;
 	const char* window_name;
 } stDisplayWindow;
 
@@ -45,7 +44,10 @@ typedef struct {
 
 typedef struct {
 	stDisplayWindow wndFlags;
+	stDataField* dataFlags;
 	stDisplayWindow wndDescription;
+	stDataField* dataDesciption;
+
 	stDisplayWindow wndResult;
 
 	stSelection object_selection;
@@ -68,12 +70,12 @@ typedef enum
 void InteractData(stMainWindow arrErasable);
 void GetOptions(stMainWindow* arrOptions, char* pCommand);
 void EraseStruct(stMainWindow arrErasable);
-void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, int iHighlighted, int* iyOffset, int* ixOffset);
+void PrintWindowData(char* sExecName, stSelection objSelection, stDisplayWindow wndSub, stDataField* _data,  int iSize, int iHighlighted, int* iyOffset, int* ixOffset);
 void AddSelection(stSelection* object_selection, int iHighlighted);
 void GetFitSize(stDataField* arrData, int iSize, stWindowSize* twndSize);
 char* DisplayMessage(int _id, char* sMessage);
-void SetParameter(stMainWindow wndMain, stDisplayWindow* wndFlags, int iHighlighted);
-int WriteSH(stSelection objSelection, char* sExecName, stDisplayWindow wndFlags);
+void SetParameter(stDataField* wndFlags, int iHighlighted);
+int WriteSH(stSelection objSelection, char* sExecName, stDataField* wndFlags);
 
 int main(int argc, char *argv[])
 {
@@ -120,8 +122,8 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand)
 			iLines++;
 	}
 
-	arrOptions->wndFlags.window_data = malloc(iLines * sizeof(char*));
-	arrOptions->wndDescription.window_data = malloc(iLines * sizeof(char*));
+	arrOptions->dataFlags = malloc(iLines * sizeof(stDataField));
+	arrOptions->dataDesciption = malloc(iLines * sizeof(stDataField));
 
 	fpHelp = popen(pCommand, "r");
 	for (int a = 0; fgets(buffer, sizeof(buffer), fpHelp) != NULL; a++)
@@ -147,8 +149,8 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand)
 		}
 		pNewFlag = strtok(updated_buffer, "");
 
-		arrOptions->wndFlags.window_data[a].data = malloc((strlen(pNewFlag) + 1) * sizeof(char*));
-		strcpy(arrOptions->wndFlags.window_data[a].data, pNewFlag);
+		arrOptions->dataFlags[a].data = malloc((strlen(pNewFlag) + 1) * sizeof(char*));
+		strcpy(arrOptions->dataFlags[a].data, pNewFlag);
 
 		memset(updated_buffer, '\0', sizeof(updated_buffer));
 		for (int b = iPosSymbol + 1, c = 0; b < strlen(buffer) + 1; b++) 
@@ -161,8 +163,8 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand)
 		}
 		pNewDescription = strtok(updated_buffer, "");
 
-		arrOptions->wndDescription.window_data[a].data = malloc((strlen(pNewDescription) + 1) * sizeof(char*));
-		strcpy(arrOptions->wndDescription.window_data[a].data, pNewDescription);
+		arrOptions->dataDesciption[a].data = malloc((strlen(pNewDescription) + 1) * sizeof(char*));
+		strcpy(arrOptions->dataDesciption[a].data, pNewDescription);
 	}
 
 	arrOptions->count_options = iLines;
@@ -209,7 +211,7 @@ void AddSelection(stSelection* object_selection, int iHighlighted)
 	}
 }
 
-void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, int iHighlighted, int* iyOffset, int* ixOffset)
+void PrintWindowData(char* sExecName, stSelection objSelection, stDisplayWindow wndSub, stDataField* _data,  int iSize, int iHighlighted, int* iyOffset, int* ixOffset)
 { 
 	switch (wndSub.window_id) 
 	{
@@ -221,8 +223,8 @@ void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, in
 
 			for (int a = 0, b = *iyOffset; b < iSize; a++, b++)
 			{
-				for (int c = 0; c < wndMain.object_selection.count_selected; c++) 
-					if (wndMain.object_selection.list_selected[c] == b) 
+				for (int c = 0; c < objSelection.count_selected; c++) 
+					if (objSelection.list_selected[c] == b) 
 					{
 						init_pair(1, COLOR_GREEN, 0);
 						wattron(wndSub.hWindow, COLOR_PAIR(1));
@@ -233,7 +235,7 @@ void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, in
 				if (b == iHighlighted)
 					wattron(wndSub.hWindow, A_REVERSE);
 
-				mvwprintw(wndSub.hWindow, a + 1, 1, "%s\n", wndSub.window_data[b].data);
+				mvwprintw(wndSub.hWindow, a + 1, 1, "%s\n", _data[b].data);
 				refresh();
 
 				wattroff(wndSub.hWindow, A_REVERSE);
@@ -245,30 +247,30 @@ void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, in
 			{
 				werase(wndSub.hWindow);
 
-				mvwprintw(wndSub.hWindow, 1, 1, "%s", wndMain.executable_name);
-				*ixOffset += (strlen(wndMain.executable_name) + 1);
+				mvwprintw(wndSub.hWindow, 1, 1, "%s", sExecName);
+				*ixOffset += (strlen(sExecName) + 1);
 
-				for (int a = 0; a < wndMain.object_selection.count_selected; a++) 
+				for (int a = 0; a < objSelection.count_selected; a++) 
 				{
-					if (wndMain.wndFlags.window_data->param != NULL) 
+					if (_data[a].param != NULL) 
 					{
-						mvwprintw(wndSub.hWindow, 1, *ixOffset + 1, "--%s=%s",  wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].data, wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].param);
-						*ixOffset += (strlen(wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].data + strlen(wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].param)) + 3);
+						mvwprintw(wndSub.hWindow, 1, *ixOffset + 1, "--%s=%s",  _data[objSelection.list_selected[a]].data, _data[objSelection.list_selected[a]].param);
+						*ixOffset += (strlen(_data[objSelection.list_selected[a]].data + strlen(_data[objSelection.list_selected[a]].param)) + 3);
 					}
 					else
 					{
-						mvwprintw(wndSub.hWindow, 1, *ixOffset + 1, "--%s",  wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].data);
-						*ixOffset += (strlen(wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].data) + 3);
+						mvwprintw(wndSub.hWindow, 1, *ixOffset + 1, "--%s", _data[objSelection.list_selected[a]].data);
+						*ixOffset += (strlen(_data[objSelection.list_selected[a]].data) + 3);
 					}
 				}
 				*ixOffset = 0;
 			}
 		break;
 		case WND_DESCRIPTION:
-			if (wndSub.window_data != NULL)
+			if (_data[iHighlighted].data != NULL)
 			{
 				werase(wndSub.hWindow);
-				mvwprintw(wndSub.hWindow, 1, 1, "%s", wndSub.window_data[iHighlighted].data);
+				mvwprintw(wndSub.hWindow, 1, 1, "%s", _data[iHighlighted].data);
 			}
 		break;
 	}
@@ -288,7 +290,7 @@ void InteractData(stMainWindow arrPrintable)
 	getmaxyx(stdscr, iyMax, ixMax);
 	stWindowSize twndSize;
 
-	GetFitSize(arrPrintable.wndFlags.window_data, arrPrintable.count_options, &twndSize);
+	GetFitSize(arrPrintable.dataFlags, arrPrintable.count_options, &twndSize);
 
 	arrPrintable.wndFlags.hWindow = newwin(getmaxy(stdscr), twndSize.x_size + 10, 0, 0);
 	arrPrintable.wndFlags.window_name = "Flags";
@@ -311,9 +313,9 @@ void InteractData(stMainWindow arrPrintable)
 	arrPrintable.wndResult.offset_x = 0;
 	while (1) 
 	{
-		PrintWindowData(arrPrintable, arrPrintable.wndFlags, arrPrintable.count_options, iHighlighted, &arrPrintable.wndFlags.offset_y, 0);
-		PrintWindowData(arrPrintable, arrPrintable.wndDescription, 1, iHighlighted, &arrPrintable.wndFlags.offset_y, 0);
-		PrintWindowData(arrPrintable, arrPrintable.wndResult, 1, -1, &arrPrintable.wndResult.offset_y, &arrPrintable.wndResult.offset_x);
+		PrintWindowData(arrPrintable.executable_name, arrPrintable.object_selection, arrPrintable.wndFlags, arrPrintable.dataFlags, arrPrintable.count_options, iHighlighted, &arrPrintable.wndFlags.offset_y, 0);
+		PrintWindowData(arrPrintable.executable_name, arrPrintable.object_selection, arrPrintable.wndDescription, arrPrintable.dataDesciption, 1, iHighlighted, &arrPrintable.wndFlags.offset_y, 0);
+		PrintWindowData(arrPrintable.executable_name, arrPrintable.object_selection, arrPrintable.wndResult, arrPrintable.dataFlags,  1, -1, &arrPrintable.wndResult.offset_y, &arrPrintable.wndResult.offset_x);
 
 		iInterface = wgetch(arrPrintable.wndFlags.hWindow);
 		switch (iInterface) 
@@ -338,8 +340,8 @@ void InteractData(stMainWindow arrPrintable)
 			break;
 
 			case 10: AddSelection(&arrPrintable.object_selection, iHighlighted); break;
-			case 121: WriteSH(arrPrintable.object_selection, arrPrintable.executable_name, arrPrintable.wndFlags); break;
-			case 101: SetParameter(arrPrintable, &arrPrintable.wndFlags, iHighlighted); break;
+			case 121: WriteSH(arrPrintable.object_selection, arrPrintable.executable_name, arrPrintable.dataFlags); break;
+			case 101: SetParameter(arrPrintable.dataFlags, iHighlighted); break;
 		}
 
 	}
@@ -347,11 +349,11 @@ void InteractData(stMainWindow arrPrintable)
 	getch();
 }
 
-void SetParameter(stMainWindow wndMain, stDisplayWindow* wndFlags, int iHighlighted)
+void SetParameter(stDataField* wndFlags, int iHighlighted)
 {
 	char* sResponse = DisplayMessage(WND_DIALOG, "Add value: ");
 
-	wndFlags->window_data->param = sResponse;
+	wndFlags[iHighlighted].param = sResponse;
 }
 
 char* DisplayMessage(int _id, char* sMessage)
@@ -400,7 +402,7 @@ char* DisplayMessage(int _id, char* sMessage)
 	return sReturn;
 }
 
-int WriteSH(stSelection objSelection, char* sExecName, stDisplayWindow wndFlags)
+int WriteSH(stSelection objSelection, char* sExecName, stDataField* wndFlags)
 {
 	if (objSelection.count_selected < 1)
 		return 1;
@@ -415,8 +417,8 @@ int WriteSH(stSelection objSelection, char* sExecName, stDisplayWindow wndFlags)
 	for (int a = 0; a < objSelection.count_selected; a++)
 	{
 		strcat(pCommand, " --");
-		pCommand = realloc(pCommand, strlen(pCommand) + strlen(wndFlags.window_data[objSelection.list_selected[a]].data) * sizeof(char));
-		strcat(pCommand, wndFlags.window_data[objSelection.list_selected[a]].data);
+		pCommand = realloc(pCommand, strlen(pCommand) + strlen(wndFlags[objSelection.list_selected[a]].data) * sizeof(char));
+		strcat(pCommand, wndFlags[objSelection.list_selected[a]].data);
 	}			
 
 	fpFile = fopen(sResponse, "r");
@@ -449,12 +451,14 @@ void EraseStruct(stMainWindow arrErasable)
 {
 	for (int a = 0; a < arrErasable.count_options; a++)
 	{
-		free(arrErasable.wndFlags.window_data[a].data);
-		free(arrErasable.wndFlags.window_data[a].param);
-		free(arrErasable.wndDescription.window_data[a].data);
-		free(arrErasable.wndDescription.window_data[a].param);
+		free(arrErasable.dataFlags[a].data);
+		free(arrErasable.dataFlags[a].param);
+		free(arrErasable.dataDesciption[a].data);
+		free(arrErasable.dataDesciption[a].param);
 	}
 
-	free(arrErasable.wndFlags.window_data);
-	free(arrErasable.wndDescription.window_data);
+	free(arrErasable.dataFlags->data);
+	free(arrErasable.dataFlags->param);
+	free(arrErasable.dataDesciption->data);
+	free(arrErasable.dataDesciption->param);
 }
