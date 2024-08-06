@@ -14,6 +14,12 @@ typedef struct
 	int y_size;
 
 } stWindowSize;
+
+typedef struct {
+	char* data;
+	char* param;
+} stDataField;
+
 typedef struct {
 	int* list_selected;
 	int count_selected;
@@ -25,7 +31,7 @@ typedef struct {
 	int offset_y;
 	int offset_x;
 
-	char** window_data;
+	stDataField* window_data;
 	const char* window_name;
 } stDisplayWindow;
 
@@ -66,8 +72,9 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand);
 void EraseStruct(stMainWindow arrErasable);
 void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, int iHighlighted, int* iyOffset, int* ixOffset);
 void AddSelection(stSelection* object_selection, int iHighlighted);
-void GetFitSize(char** arrData, int iSize, stWindowSize* twndSize);
+void GetFitSize(stDataField* arrData, int iSize, stWindowSize* twndSize);
 void DisplayMessage(stSystemWindow wndMessage, char* sMessage);
+void SetParameter(stMainWindow wndMain, stDisplayWindow* wndFlags, int iHighlighted);
 int WriteSH(stMainWindow wndMain);
 
 int main(int argc, char *argv[])
@@ -111,8 +118,7 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand)
 	int iLines = 0;
 	for (int a = 0; fgets(buffer, sizeof(buffer), fpHelp) != NULL; a++)
 	{
-		char *pNew = strstr(buffer, "--");
-		if (pNew != NULL) 
+		char *pNew = strstr(buffer, "--"); if (pNew != NULL) 
 			iLines++;
 	}
 
@@ -143,8 +149,8 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand)
 		}
 		pNewFlag = strtok(updated_buffer, "");
 
-		arrOptions->wndFlags.window_data[a] = malloc((strlen(pNewFlag) + 1) * sizeof(char*));
-		strcpy(arrOptions->wndFlags.window_data[a], pNewFlag);
+		arrOptions->wndFlags.window_data[a].data = malloc((strlen(pNewFlag) + 1) * sizeof(char*));
+		strcpy(arrOptions->wndFlags.window_data[a].data, pNewFlag);
 
 		memset(updated_buffer, '\0', sizeof(updated_buffer));
 		for (int b = iPosSymbol + 1, c = 0; b < strlen(buffer) + 1; b++) 
@@ -157,20 +163,20 @@ void GetOptions(stMainWindow* arrOptions, char* pCommand)
 		}
 		pNewDescription = strtok(updated_buffer, "");
 
-		arrOptions->wndDescription.window_data[a] = malloc((strlen(pNewDescription) + 1) * sizeof(char*));
-		strcpy(arrOptions->wndDescription.window_data[a], pNewDescription);
+		arrOptions->wndDescription.window_data[a].data = malloc((strlen(pNewDescription) + 1) * sizeof(char*));
+		strcpy(arrOptions->wndDescription.window_data[a].data, pNewDescription);
 	}
 
 	arrOptions->count_options = iLines;
 	fclose(fpHelp);
 }
 
-void GetFitSize(char** arrData, int iSize, stWindowSize* twndSize) {
+void GetFitSize(stDataField* arrData, int iSize, stWindowSize* twndSize) {
 	int ixWin = 0;
 
 	for (int a = 0; a < iSize; a++)
-		if (ixWin < strlen(arrData[a]))
-			ixWin = strlen(arrData[a]);
+		if (ixWin < strlen(arrData[a].data))
+			ixWin = strlen(arrData[a].data);
 	
 	twndSize->y_size = iSize;
 	twndSize->x_size = ixWin;
@@ -229,7 +235,7 @@ void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, in
 				if (b == iHighlighted)
 					wattron(wndSub.hWindow, A_REVERSE);
 
-				mvwprintw(wndSub.hWindow, a + 1, 1, "%s\n", wndSub.window_data[b]);
+				mvwprintw(wndSub.hWindow, a + 1, 1, "%s\n", wndSub.window_data[b].data);
 				refresh();
 
 				wattroff(wndSub.hWindow, A_REVERSE);
@@ -246,8 +252,16 @@ void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, in
 
 				for (int a = 0; a < wndMain.object_selection.count_selected; a++) 
 				{
-					mvwprintw(wndSub.hWindow, 1, *ixOffset + 1, "--%s",  wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]]);
-					*ixOffset += (strlen(wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]]) + 3);
+					if (wndMain.wndFlags.window_data->param != NULL) 
+					{
+						mvwprintw(wndSub.hWindow, 1, *ixOffset + 1, "--%s=%s",  wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].data, wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].param);
+						*ixOffset += (strlen(wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].data + strlen(wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].param)) + 3);
+					}
+					else
+					{
+						mvwprintw(wndSub.hWindow, 1, *ixOffset + 1, "--%s",  wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].data);
+						*ixOffset += (strlen(wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].data) + 3);
+					}
 				}
 				*ixOffset = 0;
 			}
@@ -256,7 +270,7 @@ void PrintWindowData(stMainWindow wndMain, stDisplayWindow wndSub, int iSize, in
 			if (wndSub.window_data != NULL)
 			{
 				werase(wndSub.hWindow);
-				mvwprintw(wndSub.hWindow, 1, 1, "%s", wndSub.window_data[iHighlighted]);
+				mvwprintw(wndSub.hWindow, 1, 1, "%s", wndSub.window_data[iHighlighted].data);
 			}
 		break;
 	}
@@ -335,12 +349,25 @@ void InteractData(stMainWindow arrPrintable)
 
 			case 10: AddSelection(&arrPrintable.object_selection, iHighlighted); break;
 			case 121: WriteSH(arrPrintable); break;
-			case 101: break;
+			case 101: SetParameter(arrPrintable, &arrPrintable.wndFlags, iHighlighted); break;
 		}
 
 	}
 
 	getch();
+}
+
+void SetParameter(stMainWindow wndMain, stDisplayWindow* wndFlags, int iHighlighted)
+{
+	char* sMessage = "Add value: ";
+	char sResponse[32];
+
+	DisplayMessage(wndMain.wndDialog, sMessage);
+	mvwgetnstr(wndMain.wndDialog.hWindow, 1, strlen(sMessage) + 1, sResponse, 32);
+
+	werase(wndMain.wndDialog.hWindow);
+
+	wndFlags->window_data->param = sMessage;
 }
 
 void DisplayMessage(stSystemWindow wndMessage, char* sMessage)
@@ -393,8 +420,8 @@ int WriteSH(stMainWindow wndMain)
 	for (int a = 0; a < wndMain.object_selection.count_selected; a++)
 	{
 		strcat(pCommand, " --");
-		pCommand = realloc(pCommand, strlen(pCommand) + strlen(wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]]) * sizeof(char));
-		strcat(pCommand, wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]]);
+		pCommand = realloc(pCommand, strlen(pCommand) + strlen(wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].data) * sizeof(char));
+		strcat(pCommand, wndMain.wndFlags.window_data[wndMain.object_selection.list_selected[a]].data);
 	}			
 
 	fpFile = fopen(sResponse, "r");
@@ -431,8 +458,10 @@ void EraseStruct(stMainWindow arrErasable)
 {
 	for (int a = 0; a < arrErasable.count_options; a++)
 	{
-		free(arrErasable.wndFlags.window_data[a]);
-		free(arrErasable.wndDescription.window_data[a]);
+		free(arrErasable.wndFlags.window_data[a].data);
+		free(arrErasable.wndFlags.window_data[a].param);
+		free(arrErasable.wndDescription.window_data[a].data);
+		free(arrErasable.wndDescription.window_data[a].param);
 	}
 
 	free(arrErasable.wndFlags.window_data);
