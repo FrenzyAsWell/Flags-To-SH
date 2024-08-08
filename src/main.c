@@ -93,6 +93,10 @@ int main(int argc, char *argv[])
 
 	initscr();
 	start_color();
+	init_pair(1, COLOR_GREEN, 0);
+	init_pair(2, COLOR_YELLOW, 0);
+	init_pair(3, COLOR_RED, 0);
+
 	curs_set(0);
 
 	InteractData(arrData);
@@ -226,7 +230,6 @@ void PrintWindowData(char* sExecName, stSelection objSelection, stDisplayWindow 
 				for (int c = 0; c < objSelection.count_selected; c++) 
 					if (objSelection.list_selected[c] == b) 
 					{
-						init_pair(1, COLOR_GREEN, 0);
 						wattron(wndSub.hWindow, COLOR_PAIR(1));
 
 						break;
@@ -371,16 +374,14 @@ char* DisplayMessage(int _id, char* sMessage)
 	{
 		case WND_DIALOG:
 			{
-				init_pair(2, COLOR_YELLOW, 0);
-				wattron(wndMessage.hWindow, 2);
+				wattron(wndMessage.hWindow, COLOR_PAIR(2));
 
 				wndMessage.window_name = "Dialog";
 			};
 		break;
 		case WND_ERROR:
 			{
-				init_pair(3, COLOR_RED, 0);
-				wattron(wndMessage.hWindow, 3);
+				wattron(wndMessage.hWindow, COLOR_PAIR(3));
 
 				wndMessage.window_name = "Error";
 			};
@@ -389,9 +390,10 @@ char* DisplayMessage(int _id, char* sMessage)
 
 	box(wndMessage.hWindow, 0, 0);
 	mvwprintw(wndMessage.hWindow, 0, 2, " %s ", wndMessage.window_name);
+	refresh();
 
-	wattroff(wndMessage.hWindow, 2);
-	wattroff(wndMessage.hWindow, 3);
+	wattroff(wndMessage.hWindow, COLOR_PAIR(2));
+	wattroff(wndMessage.hWindow, COLOR_PAIR(3));
 
 	mvwprintw(wndMessage.hWindow, 1, 1, " %s", sMessage);
 	wrefresh(wndMessage.hWindow);
