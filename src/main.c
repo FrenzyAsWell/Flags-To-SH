@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 {
 	if (argc != ARG_INPUT_COMMAND) 
 	{
-		printf("Help option");
+		printf("Enter executable name");
 		return 1;	
 	}
 
