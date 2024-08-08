@@ -405,7 +405,7 @@ char* DisplayMessage(int _id, char* sMessage)
 	werase(wndMessage.hWindow);
 	delwin(wndMessage.hWindow);
 
-	char* sReturn = malloc(strlen(sResponse) * sizeof(char));
+	char* sReturn = malloc(strlen(sResponse) * sizeof(char*));
 	strcpy(sReturn, sResponse);
 	
 	return sReturn;
@@ -421,7 +421,7 @@ int WriteSH(stSelection objSelection, char* sExecName, stDataField* wndFlags)
 	char* sPrevigies = NULL;
 	char* sResponse = DisplayMessage(WND_DIALOG, "Enter name of SH: ");
 
-	char* pCommand = malloc(strlen(sExecName) * sizeof(char));
+	char* pCommand = malloc(strlen(sExecName) * sizeof(char*));
 	strcpy(pCommand, sExecName);
 	for (int it = 0; it < objSelection.count_selected; it++)
 	{
