@@ -1,7 +1,4 @@
-file
 shell.nix
-
-build/
 
 # Prerequisites
 #*.d

@@ -22,8 +22,6 @@
   
   - [Tips](#Tips)
 
-- ***SAMPLE***
-
 - **License**
 
 ## **Info**
@@ -31,7 +29,7 @@
 ### ***Description***
 
 ***Flags-to-SH***  is a TUI tool, which simplify creating custom scripts, refering to specified application with included flags
- 
+
 These project also implement [Ncurses API](https://invisible-island.net/ncurses/) as render framework.
 
 ### ***Features***
@@ -52,6 +50,12 @@ The best way is to clone repository into your machine:
 
 ```shell
 git clone https://github.com/FrenzyAsWell/Flags-To-SH.git && cd Flags-To-SH
+```
+
+When build it using Make:
+
+```shell
+cd build && make
 ```
 
 #### ***Binary Releases***
@@ -94,5 +98,3 @@ flags-to-sh <exec-name>
 [GNU GENERAL PUBLIC LICENSE](https://github.com/FrenzyAsWell/Flags-To-SH/blob/main/LICENSE) - Version 3, 29 June 2007
 
 **2024** - *Yan Moiseev*
-
-
