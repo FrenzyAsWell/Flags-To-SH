@@ -360,6 +360,8 @@ int SetParameter(stDataField* wndFlags, int iHighlighted)
 	wndFlags[iHighlighted].param = malloc((strlen(sResponse) + 1) * sizeof(char*));
 	strcpy(wndFlags[iHighlighted].param, sResponse);
 
+	free(sResponse);
+
 	return 0;
 }
 
@@ -459,6 +461,7 @@ int WriteSH(stSelection objSelection, char* sExecName, stDataField* wndFlags)
 
 	fclose(fpFile);
 	free(pCommand);
+	free(sResponse);
 
 	return 0;
 }
