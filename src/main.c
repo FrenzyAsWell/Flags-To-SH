@@ -52,14 +52,15 @@ typedef struct {
 
 	stSelection object_selection;
 	int count_options;
+
 	char* executable_name;
+	WINDOW* window_screen;
 } stMainWindow;
 
 char buffer[256];
 char updated_buffer[256];
 
-typedef enum 
-{
+typedef enum {
 	WND_FLAGS = 1,
 	WND_RESULT = 2,
 	WND_DESCRIPTION = 3,
@@ -91,7 +92,7 @@ int main(int argc, char *argv[])
 
 	GetOptions(&arrData, argv[argc - 1]);
 
-	initscr();
+	arrData.window_screen = initscr();
 	start_color();
 	init_pair(1, COLOR_GREEN, 0);
 	init_pair(2, COLOR_YELLOW, 0);
@@ -315,8 +316,21 @@ void InteractData(stMainWindow arrPrintable)
 
 	arrPrintable.wndFlags.offset_y = 0;
 	arrPrintable.wndResult.offset_x = 0;
+
 	while (1) 
 	{
+		if (is_term_resized(iyMax, ixMax)) 
+		{
+			werase(arrPrintable.wndFlags.hWindow);
+
+			wresize(arrPrintable.wndFlags.hWindow, getmaxy(stdscr), getmaxx(arrPrintable.wndFlags.hWindow));
+			wresize(arrPrintable.wndDescription.hWindow, getmaxy(stdscr) - getmaxy(arrPrintable.wndResult.hWindow), getmaxx(stdscr) - getmaxx(arrPrintable.wndFlags.hWindow));
+			wresize(arrPrintable.wndResult.hWindow, getmaxy(arrPrintable.wndResult.hWindow), getmaxx(stdscr) - getmaxx(arrPrintable.wndFlags.hWindow));
+
+			mvwin(arrPrintable.wndResult.hWindow, getmaxy(arrPrintable.wndDescription.hWindow), getmaxx(arrPrintable.wndFlags.hWindow));
+			refresh();
+		}
+
 		PrintWindowData(arrPrintable.executable_name, arrPrintable.object_selection, arrPrintable.wndFlags, arrPrintable.dataFlags, arrPrintable.count_options, iHighlighted, &arrPrintable.wndFlags.offset_y, 0);
 		PrintWindowData(arrPrintable.executable_name, arrPrintable.object_selection, arrPrintable.wndDescription, arrPrintable.dataDesciption, 1, iHighlighted, &arrPrintable.wndFlags.offset_y, 0);
 		PrintWindowData(arrPrintable.executable_name, arrPrintable.object_selection, arrPrintable.wndResult, arrPrintable.dataFlags,  1, -1, &arrPrintable.wndResult.offset_y, &arrPrintable.wndResult.offset_x);
@@ -367,7 +381,7 @@ int SetParameter(stDataField* wndFlags, int iHighlighted)
 
 char* DisplayMessage(int _id, char* sMessage)
 {
-	char sResponse[64];
+	char sResponse[512];
 
 	stSystemWindow wndMessage;
 	wndMessage.hWindow = newwin(3, getmaxx(stdscr) / 2, getmaxy(stdscr) / 2, getmaxx(stdscr) / 4);

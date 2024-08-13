@@ -1,4 +1,5 @@
 shell.nix
+build/flags-to-sh
 
 # Prerequisites
 #*.d
