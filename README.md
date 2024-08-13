@@ -3,25 +3,16 @@
 ---
 
 - **Info**
-  
   - [Description](#Desciption)
-  
   - [Features](#Features)
-  
   - [Gallery & Video](#Non)
-
 - **Installation**
-  
   - [Using Git](#Using-Git)
-  
   - [Binary releases](#Binary-Releases)
-
 - **Usage**
-  
   - [Hotkeys](#Hotkeys)
-  
   - [Tips](#Tips)
-
+- [**Gallery**](#Gallery)
 - **License**
 
 ## **Info**
@@ -91,7 +82,10 @@ flags-to-sh <exec-name>
 | `Desciption` | Gives a desciption of flag from `--help` command             |
 | `Result`     | Displays end result, which will be written into shell script |
 
- 
+## Gallery
+
+![1723097424_grim](https://github.com/user-attachments/assets/031d8009-bad5-4931-b9ee-24c3823a10bd)
+![1723097474_grim](https://github.com/user-attachments/assets/d8a28cc1-1e7d-41c9-9751-c697e68867d3)
 
 ## License
 
