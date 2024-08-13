@@ -31,6 +31,8 @@ These project also implement [Ncurses API](https://invisible-island.net/ncurses/
 
 - Built-in attributes redactor
 
+- Window resize support
+
 ### *Gallery & Video*
 
 ## Installation
