@@ -1,0 +1,3 @@
+[submodule "includes/ftxui-starter"]
+	path = includes/ftxui-starter
+	url = https://github.com/ArthurSonzogni/ftxui-starter
