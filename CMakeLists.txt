@@ -1,5 +1,8 @@
 cmake_minimum_required (VERSION 3.11)
 
+SET(CMAKE_CXX_FLAGS_DEBUG "-g")
+SET(BUILD_MODE Debug)
+
 project(ftxui-starter LANGUAGES CXX VERSION 1.0.0)
 find_package(ftxui 5 REQUIRED)
 
