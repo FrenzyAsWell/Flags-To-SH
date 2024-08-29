@@ -11,7 +11,9 @@
 
 #include <ftxui/screen/screen.hpp>
 
-int main()
+#include "core.h"
+
+int main(int argc, char *argv[])
 {
 	auto main_screen = ftxui::ScreenInteractive::Fullscreen();
 
@@ -20,9 +22,11 @@ int main()
   	int result_size = 1;
   	int flags_size = 25;
 
-	auto window_flags = ftxui::Renderer([&flags_size] 
+	auto window_flags = ftxui::Renderer([&flags_size, argc, argv]
 	{ 
-		return ftxui::text(std::to_string(flags_size)) | ftxui::center;
+		stData arrData; 
+		GetOptions(&arrData, argv[argc - 1]);
+		return ftxui::text(std::to_string(arrData.dataFlags[1])) | ftxui::center;
 	});
 
 	auto window_desciption = ftxui::Renderer([]
